@@ -1,6 +1,6 @@
 import { pgTable, serial, text, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
 
-export const posts = pgTable('posts', {
+export const questions = pgTable('questions', {
   id: serial('id').primaryKey(),
   question: text('question').notNull(),
   isUrgent: boolean('is_urgent').default(false),
