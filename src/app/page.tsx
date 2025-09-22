@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { useState } from "react";
+import Image from "next/image";
 
 export default function Home() {
   const [question, setQuestion] = useState('');
@@ -46,7 +47,17 @@ export default function Home() {
   return (
     <div className="font-sans min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-center">🗺️ Roaming Map</h1>
+        <div className="flex items-center mb-8">
+          <Image
+            src="/short-logo.png"
+            alt="Roaming Map Logo"
+            width={60}
+            height={30}
+            className="mr-4"
+            priority
+          />
+          <h1 className="text-3xl font-bold">Roaming Map</h1>
+        </div>
         
         <form onSubmit={handleSubmit} className="space-y-4 mb-8">
           <div>
