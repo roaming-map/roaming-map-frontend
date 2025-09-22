@@ -2,6 +2,18 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db/db'; 
 import { questions } from '@/db/schema'; 
 
+export async function GET() {
+  try {
+    const allQuestions = await db.select().from(questions);
+    return NextResponse.json(allQuestions);
+  } catch (error) {
+    console.error('Error fetching questions:', error);
+    return NextResponse.json({
+      error: 'Failed to fetch questions',
+    }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
