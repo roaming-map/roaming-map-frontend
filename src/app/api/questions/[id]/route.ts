@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db';
 import { questions } from '@/db/schema';
-import { validatePathParams, validateRequest, handleDatabaseError } from '@/lib/utils';
+import { validatePathParams, validateRequest, handleDatabaseError } from '@/utils/validation-helpers';
 import { questionIdSchema, updateQuestionSchema } from '@/validations';
 import { eq } from 'drizzle-orm';
 

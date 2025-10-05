@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db'; 
 import { questions, users } from '@/db/schema';
-import { validateRequest, handleDatabaseError } from '@/lib/utils';
+import { validateRequest, handleDatabaseError } from '@/utils/validation-helpers';
 import { createQuestionSchema } from '@/validations';
 import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm'; 
