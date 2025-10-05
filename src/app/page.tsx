@@ -3,66 +3,34 @@
 import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/Navigation";
 import { SignedIn, SignedOut } from '@clerk/nextjs';
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
+import { useQuestions, useCreateQuestion } from "@/hooks/api";
 
 export default function Home() {
   const [question, setQuestion] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const fetchQuestions = async () => {
-    try {
-      const response = await fetch('/api/questions');
-      const data = await response.json();
-      setQuestions(data);
-    } catch (error) {
-      console.error('Error fetching questions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchQuestions();
-  }, []);
+  // TanStack Query hooks
+  const { data: questions, isLoading, error } = useQuestions();
+  const createQuestionMutation = useCreateQuestion();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     setMessage('');
 
     try {
-      const response = await fetch('/api/questions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          question,
-          isUrgent,
-          createdBy: 1, // Temporary user ID
-        }),
+      await createQuestionMutation.mutateAsync({
+        question,
+        isUrgent,
       });
-
-      const data = await response.json();
       
-      if (response.ok) {
-        setMessage('✅ Question submitted successfully!');
-        setQuestion('');
-        setIsUrgent(false);
-        // Refresh the questions list
-        fetchQuestions();
-      } else {
-        setMessage('❌ Error: ' + data.error);
-      }
+      setMessage('✅ Question submitted successfully!');
+      setQuestion('');
+      setIsUrgent(false);
     } catch (error) {
-      setMessage('❌ Network error: ' + error);
-    } finally {
-      setSubmitting(false);
+      setMessage('❌ Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -112,8 +80,8 @@ export default function Home() {
             </label>
           </div>
           
-          <Button type="submit" disabled={submitting}>
-            {submitting ? 'Submitting...' : 'Submit Question'}
+          <Button type="submit" disabled={createQuestionMutation.isPending}>
+            {createQuestionMutation.isPending ? 'Submitting...' : 'Submit Question'}
           </Button>
         </form>
 
@@ -139,17 +107,21 @@ export default function Home() {
         <div className="mt-12">
           <h2 className="text-2xl font-bold mb-6">Recent Questions</h2>
           
-          {loading ? (
+          {isLoading ? (
             <div className="text-center py-8">
               <div className="text-gray-500">Loading questions...</div>
             </div>
-          ) : questions.length === 0 ? (
+          ) : error ? (
+            <div className="text-center py-8">
+              <div className="text-red-500">Error loading questions: {error.message}</div>
+            </div>
+          ) : !questions || questions.length === 0 ? (
             <div className="text-center py-8">
               <div className="text-gray-500">No questions yet. Be the first to ask!</div>
             </div>
           ) : (
             <div className="space-y-4">
-              {questions.map((q: any) => (
+              {questions.map((q) => (
                 <div key={q.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -158,10 +130,16 @@ export default function Home() {
                         <span>ID: {q.id}</span>
                         <span className="mx-2">•</span>
                         <span>{new Date(q.createdAt).toLocaleDateString()} at {new Date(q.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
-                        {q.is_urgent && (
+                        {q.isUrgent && (
                           <>
                             <span className="mx-2">•</span>
                             <span className="text-red-600 font-medium">🚨 Urgent</span>
+                          </>
+                        )}
+                        {q.user && (
+                          <>
+                            <span className="mx-2">•</span>
+                            <span>By: {q.user.name || `${q.user.firstName} ${q.user.lastName}`}</span>
                           </>
                         )}
                       </div>
