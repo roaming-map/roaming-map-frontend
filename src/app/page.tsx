@@ -1,6 +1,8 @@
 'use client';
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
+import { Navigation } from "@/components/Navigation";
+import { SignedIn, SignedOut } from '@clerk/nextjs';
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
@@ -65,19 +67,21 @@ export default function Home() {
   };
 
   return (
-    <div className="font-sans min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="max-w-2xl mx-auto">
-        <div className="flex items-center mb-8">
-          <Image
-            src="/short-logo.png"
-            alt="Roaming Map Logo"
-            width={60}
-            height={30}
-            className="mr-4"
-            priority
-          />
-          <h1 className="text-3xl font-bold">Roaming Map</h1>
-        </div>
+    <div className="font-sans min-h-screen">
+      <Navigation />
+      <div className="p-8 pb-20 gap-16 sm:p-20">
+        <main className="max-w-2xl mx-auto">
+          <div className="flex items-center mb-8">
+            <Image
+              src="/short-logo.png"
+              alt="Roaming Map Logo"
+              width={60}
+              height={30}
+              className="mr-4"
+              priority
+            />
+            <h1 className="text-3xl font-bold">Roaming Map</h1>
+          </div>
         
         <form onSubmit={handleSubmit} className="space-y-4 mb-8">
           <div>
@@ -112,6 +116,14 @@ export default function Home() {
             {submitting ? 'Submitting...' : 'Submit Question'}
           </Button>
         </form>
+
+        {/* Show sign-in prompt for anonymous users */}
+        <SignedOut>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+            <p className="text-blue-800 mb-2">Sign in to track your questions and get personalized recommendations!</p>
+            <div className="text-blue-600 text-sm">Authentication powered by Clerk</div>
+          </div>
+        </SignedOut>
 
         {message && (
           <div className={`p-4 rounded-md ${
@@ -160,7 +172,8 @@ export default function Home() {
             </div>
           )}
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
