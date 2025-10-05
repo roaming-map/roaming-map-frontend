@@ -24,6 +24,9 @@ export async function GET() {
             category: true,
           },
         },
+        
+        // Include answers for count
+        answers: true,
       },
     });
 
