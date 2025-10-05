@@ -1,6 +1,7 @@
 // Main validation exports - organized by domain
 export * from './questions';
 export * from './users';
+export * from './answers';
 
 // Re-export commonly used schemas for convenience
 export { 
@@ -14,3 +15,10 @@ export {
   userIdSchema,
   userPreferencesSchema 
 } from './users';
+
+export { 
+  createAnswerSchema,
+  updateAnswerSchema,
+  answerIdSchema,
+  markHelpfulSchema
+} from './answers';

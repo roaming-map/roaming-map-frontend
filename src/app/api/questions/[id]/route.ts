@@ -11,13 +11,17 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Validate path parameters
-    const pathValidation = validatePathParams({ params }, questionIdSchema);
-    if (!pathValidation.success) {
-      return pathValidation.error;
-    }
+    // Parse and validate the question ID from the URL path
+    const id = parseInt(params.id, 10);
     
-    const { id } = pathValidation.data;
+    if (isNaN(id) || id <= 0) {
+      return NextResponse.json(
+        {
+          error: 'Invalid question ID',
+        },
+        { status: 400 }
+      );
+    }
 
     // Query the question with relations
     const question = await db.query.questions.findFirst({
@@ -53,13 +57,17 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Validate path parameters
-    const pathValidation = validatePathParams({ params }, questionIdSchema);
-    if (!pathValidation.success) {
-      return pathValidation.error;
-    }
+    // Parse and validate the question ID from the URL path
+    const id = parseInt(params.id, 10);
     
-    const { id } = pathValidation.data;
+    if (isNaN(id) || id <= 0) {
+      return NextResponse.json(
+        {
+          error: 'Invalid question ID',
+        },
+        { status: 400 }
+      );
+    }
 
     // Validate request body
     const bodyValidation = await validateRequest(req, updateQuestionSchema);
@@ -122,13 +130,17 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Validate path parameters
-    const pathValidation = validatePathParams({ params }, questionIdSchema);
-    if (!pathValidation.success) {
-      return pathValidation.error;
-    }
+    // Parse and validate the question ID from the URL path
+    const id = parseInt(params.id, 10);
     
-    const { id } = pathValidation.data;
+    if (isNaN(id) || id <= 0) {
+      return NextResponse.json(
+        {
+          error: 'Invalid question ID',
+        },
+        { status: 400 }
+      );
+    }
 
     // Check if question exists
     const existingQuestion = await db.query.questions.findFirst({
