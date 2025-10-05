@@ -29,6 +29,20 @@
       "when": 1759059230111,
       "tag": "0003_superb_power_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1759072180186,
+      "tag": "0004_glorious_tyger_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1759575706258,
+      "tag": "0005_lying_venom",
+      "breakpoints": true
     }
   ]
 }
