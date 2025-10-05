@@ -43,6 +43,13 @@
       "when": 1759575706258,
       "tag": "0005_lying_venom",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1759681500484,
+      "tag": "0006_polite_sinister_six",
+      "breakpoints": true
     }
   ]
 }

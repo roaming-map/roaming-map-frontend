@@ -1,6 +1,7 @@
 import { pgTable, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { questions } from './questions';
+import { answers } from './answers';
 
 // Defines the 'users' table in the database
 export const users = pgTable('users', {
@@ -15,8 +16,10 @@ export const users = pgTable('users', {
 });
 
 // Defines the relationship for Drizzle ORM
-// This tells Drizzle that one user can have many questions
+// This tells Drizzle that one user can have many questions and answers
 export const usersRelations = relations(users, ({ many }) => ({
-    
   questions: many(questions),
+  
+  // One user can have many answers
+  answers: many(answers),
 }));
