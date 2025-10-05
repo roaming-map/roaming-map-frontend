@@ -1,78 +1,89 @@
 import 'dotenv/config';
 import { db } from './src/db/db';
-import { categories, questions, questionsToCategories } from './src/db/schema/index';
+import { categories, questions, questionsToCategories, users } from './src/db/schema';
 
 async function main() {
   console.log('🌱 Clearing existing data...');
-  // Clear tables to ensure a clean slate on every run
+  // Clear tables in the correct order to avoid foreign key violations
   await db.delete(questionsToCategories);
   await db.delete(questions);
+  await db.delete(users);
   await db.delete(categories);
   console.log('🗑️ Database cleared.');
 
   console.log('🌱 Seeding database...');
 
-  // 1. Create the new travel categories
+  // 1. Create Users
+  const insertedUsers = await db
+    .insert(users)
+    .values([{ name: 'Ayona' }, { name: 'Amjad' }, { name: 'Tharaka' }])
+    .returning();
+  console.log('✅ Created users:', insertedUsers);
+
+  // 2. Create Categories
   const insertedCategories = await db
     .insert(categories)
     .values([
       { category: 'Transport' },
       { category: 'Accommodation' },
       { category: 'Attraction' },
-      { category: 'Restaurant' },
-      { category: 'Shopping' },
-      { category: 'Entertainment' },
-      { category: 'Other' },
     ])
     .returning();
   console.log('✅ Created categories:', insertedCategories);
 
-  // 2. Create the first question (with one category)
-  const [questionOne] = await db
-    .insert(questions)
-    .values({
-      question: 'What is the best way to get from the airport to the city center?',
-    })
-    .returning();
-  console.log('✅ Created Question 1:', questionOne);
+  // Get user and category objects for easy access
+  const userAyona = insertedUsers.find((u) => u.name === 'Ayona');
+  const userAmjad = insertedUsers.find((u) => u.name === 'Amjad');
+  const userTharaka = insertedUsers.find((u) => u.name === 'Tharaka');
 
-  // 3. Create the second question (with two categories)
-  const [questionTwo] = await db
-    .insert(questions)
-    .values({
-      question: 'Looking for a good hotel near the main museum.',
-    })
-    .returning();
-  console.log('✅ Created Question 2:', questionTwo);
-
-  // Find the category IDs we need for linking
   const transportCat = insertedCategories.find((c) => c.category === 'Transport');
   const accommodationCat = insertedCategories.find((c) => c.category === 'Accommodation');
   const attractionCat = insertedCategories.find((c) => c.category === 'Attraction');
 
-  // 4. Link Question 1 to the 'Transport' category
-  if (questionOne && transportCat) {
-    await db.insert(questionsToCategories).values({
-      questionId: questionOne.id,
-      categoryId: transportCat.id,
-    });
-    console.log(`✅ Linked Question 1 to '${transportCat.category}'`);
+  // Ensure all required data exists before proceeding
+  if (!userAyona || !userAmjad || !userTharaka || !transportCat || !accommodationCat || !attractionCat) {
+    throw new Error('A user or category was not found after insertion.');
   }
 
-  // 5. Link Question 2 to 'Accommodation' and 'Attraction'
-  if (questionTwo && accommodationCat && attractionCat) {
-    await db.insert(questionsToCategories).values([
-      {
-        questionId: questionTwo.id,
-        categoryId: accommodationCat.id,
-      },
-      {
-        questionId: questionTwo.id,
-        categoryId: attractionCat.id,
-      },
-    ]);
-    console.log(`✅ Linked Question 2 to '${accommodationCat.category}' and '${attractionCat.category}'`);
-  }
+  // 3. Create Questions and assign them to users
+  const [questionOne] = await db
+    .insert(questions)
+    .values({
+      question: 'What is the best way to get from the airport to the city center?',
+      createdBy: userAyona.id, // Assign question to Ayona
+    })
+    .returning();
+
+  const [questionTwo] = await db
+    .insert(questions)
+    .values({
+      question: 'Looking for a good hotel near the main museum.',
+      createdBy: userAmjad.id, // Assign question to Amjad
+    })
+    .returning();
+    
+  const [questionThree] = await db
+    .insert(questions)
+    .values({
+      question: 'Are there any good bus tours that cover all the main sights?',
+      createdBy: userTharaka.id, // Assign question to Tharaka
+    })
+    .returning();
+
+  console.log('✅ Created questions and assigned them to users.');
+
+  // 4. Link questions to categories
+  await db.insert(questionsToCategories).values([
+    // Link Ayona's question to 'Transport'
+    { questionId: questionOne.id, categoryId: transportCat.id },
+    // Link Amjad's question to 'Accommodation' and 'Attraction'
+    { questionId: questionTwo.id, categoryId: accommodationCat.id },
+    { questionId: questionTwo.id, categoryId: attractionCat.id },
+    // Link Tharaka's question to 'Transport' and 'Attraction'
+    { questionId: questionThree.id, categoryId: transportCat.id },
+    { questionId: questionThree.id, categoryId: attractionCat.id },
+  ]);
+  console.log('✅ Linked questions to their categories.');
 
   console.log('🌱 Seeding complete.');
   process.exit(0);
