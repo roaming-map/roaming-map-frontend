@@ -6,8 +6,8 @@ import { SignedIn, SignedOut } from '@clerk/nextjs';
 import { useState } from "react";
 import Image from "next/image";
 import Header from '@/components/Header';
-import QuestionBox from '@/components/QuestionBox';
-import AnswersBox from '@/components/AnswersBox';
+import QuestionForm from '@/components/QuestionForm';
+import QuestionsList from '@/components/QuestionsList';
 import { useQuestions, useCreateQuestion } from "@/hooks/api";
 
 export default function Home() {
@@ -44,7 +44,7 @@ export default function Home() {
         <main className="max-w-2xl mx-auto">
           <Header />
           
-          <QuestionBox 
+          <QuestionForm 
             question={question}
             isUrgent={isUrgent}
             setQuestion={setQuestion}
@@ -62,7 +62,7 @@ export default function Home() {
             </div>
           </SignedOut>
 
-          <AnswersBox 
+          <QuestionsList 
             questions={questions || []}
             loading={isLoading}
           />

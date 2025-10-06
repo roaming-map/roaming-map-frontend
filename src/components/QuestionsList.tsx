@@ -20,12 +20,12 @@ interface Question {
   }>;
 }
 
-interface AnswersBoxProps {
+interface QuestionsListProps {
   questions: Question[];
   loading: boolean;
 }
 
-const AnswersBox = ({ questions, loading }: AnswersBoxProps) => {
+const QuestionsList = ({ questions, loading }: QuestionsListProps) => {
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow-sm border p-6">
@@ -89,4 +89,4 @@ const AnswersBox = ({ questions, loading }: AnswersBoxProps) => {
   );
 };
 
-export default AnswersBox;
+export default QuestionsList;

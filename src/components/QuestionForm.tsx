@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 
-interface QuestionBoxProps {
+interface QuestionFormProps {
   question: string;
   isUrgent: boolean;
   setQuestion: (value: string) => void;
@@ -10,7 +10,7 @@ interface QuestionBoxProps {
   message: string;
 }
 
-const QuestionBox = ({ 
+const QuestionForm = ({ 
   question, 
   isUrgent, 
   setQuestion, 
@@ -18,7 +18,7 @@ const QuestionBox = ({
   handleSubmit, 
   submitting, 
   message 
-}: QuestionBoxProps) => {
+}: QuestionFormProps) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-4">Ask a Question</h2>
@@ -66,4 +66,4 @@ const QuestionBox = ({
   );
 };
 
-export default QuestionBox;
+export default QuestionForm;
