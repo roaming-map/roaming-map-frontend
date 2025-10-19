@@ -41,7 +41,8 @@ const CategorySelector = ({
   }, []);
 
   // Handle category selection
-  const toggleCategory = (categoryId: number) => {
+  const toggleCategory = (categoryId: number, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent form submission
     if (disabled) return;
 
     const newSelection = selectedCategoryIds.includes(categoryId)
@@ -72,7 +73,8 @@ const CategorySelector = ({
           return (
             <button
               key={category.id}
-              onClick={() => toggleCategory(category.id)}
+              type="button"
+              onClick={(e) => toggleCategory(category.id, e)}
               disabled={disabled}
               className={`
                 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
