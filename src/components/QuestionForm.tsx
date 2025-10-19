@@ -1,10 +1,13 @@
 import { Button } from '@/components/ui/button';
+import CategorySelector from './CategorySelector';
 
 interface QuestionFormProps {
   question: string;
   isUrgent: boolean;
+  selectedCategoryIds: number[];
   setQuestion: (value: string) => void;
   setIsUrgent: (value: boolean) => void;
+  setSelectedCategoryIds: (value: number[]) => void;
   handleSubmit: (e: React.FormEvent) => void;
   submitting: boolean;
   message: string;
@@ -13,8 +16,10 @@ interface QuestionFormProps {
 const QuestionForm = ({ 
   question, 
   isUrgent, 
+  selectedCategoryIds,
   setQuestion, 
   setIsUrgent, 
+  setSelectedCategoryIds,
   handleSubmit, 
   submitting, 
   message 
@@ -31,6 +36,15 @@ const QuestionForm = ({
           className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           required
         />
+        
+        {/* Category Selection */}
+        <div className="mt-4">
+          <CategorySelector
+            selectedCategoryIds={selectedCategoryIds}
+            onSelectionChange={setSelectedCategoryIds}
+            disabled={submitting}
+          />
+        </div>
         
         <div className="flex items-center justify-between mt-4">
           <label className="flex items-center">

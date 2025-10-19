@@ -13,6 +13,7 @@ import { useQuestions, useCreateQuestion } from "@/hooks/api";
 export default function Home() {
   const [question, setQuestion] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [message, setMessage] = useState('');
 
   // TanStack Query hooks
@@ -27,11 +28,13 @@ export default function Home() {
       await createQuestionMutation.mutateAsync({
         question,
         isUrgent,
+        categoryIds: selectedCategoryIds,
       });
       
       setMessage('✅ Question submitted successfully!');
       setQuestion('');
       setIsUrgent(false);
+      setSelectedCategoryIds([]);
     } catch (error) {
       setMessage('❌ Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
@@ -44,15 +47,17 @@ export default function Home() {
         <main className="max-w-2xl mx-auto">
           <Header />
           
-          <QuestionForm 
-            question={question}
-            isUrgent={isUrgent}
-            setQuestion={setQuestion}
-            setIsUrgent={setIsUrgent}
-            handleSubmit={handleSubmit}
-            submitting={createQuestionMutation.isPending}
-            message={message}
-          />
+              <QuestionForm 
+                question={question}
+                isUrgent={isUrgent}
+                selectedCategoryIds={selectedCategoryIds}
+                setQuestion={setQuestion}
+                setIsUrgent={setIsUrgent}
+                setSelectedCategoryIds={setSelectedCategoryIds}
+                handleSubmit={handleSubmit}
+                submitting={createQuestionMutation.isPending}
+                message={message}
+              />
 
           {/* Show sign-in prompt for anonymous users */}
           <SignedOut>

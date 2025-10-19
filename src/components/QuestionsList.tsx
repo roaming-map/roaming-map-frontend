@@ -18,6 +18,14 @@ interface Question {
     createdBy: number | null;
     createdAt: string;
   }>;
+  questionsToCategories?: Array<{
+    questionId: number;
+    categoryId: number;
+    category?: {
+      id: number;
+      category: string;
+    };
+  }>;
 }
 
 interface QuestionsListProps {
@@ -79,6 +87,20 @@ const QuestionsList = ({ questions, loading }: QuestionsListProps) => {
                       </>
                     )}
                   </div>
+                  
+                  {/* Categories */}
+                  {q.questionsToCategories && q.questionsToCategories.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {q.questionsToCategories.map((qtc) => (
+                        <span
+                          key={qtc.categoryId}
+                          className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium"
+                        >
+                          {qtc.category?.category}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
