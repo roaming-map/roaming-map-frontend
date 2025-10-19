@@ -54,8 +54,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation with Logo and User Profile */}
+    <div className="min-h-screen bg-gray-50">
+      {/* Top Navigation Bar */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -91,251 +91,323 @@ export default function Home() {
                 </div>
               </SignedIn>
               
-                  <SignedOut>
-                    <SignInButton mode="modal">
-                      <button className="bg-[#046cb8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#046cb8]/90 transition-colors">
-                        Sign In
-                      </button>
-                    </SignInButton>
-                  </SignedOut>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="bg-[#046cb8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#046cb8]/90 transition-colors">
+                    Sign In
+                  </button>
+                </SignInButton>
+              </SignedOut>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Clean Header with Blue Gradient */}
-      <div className="bg-gradient-to-br from-[#046cb8]/10 via-[#046cb8]/5 to-white py-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 leading-tight">
-              Ask Locals About
-              <span className="block text-[#046cb8]">Where to Go & Prices</span>
-            </h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Get authentic local recommendations about what to do, where to eat, and real prices from verified locals who live there.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Thin Search Bar - Sticky */}
-      <div className="bg-gradient-to-r from-[#046cb8]/5 to-blue-50/50 py-4 sticky top-16 z-40 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-4">
-          <form onSubmit={handleSubmit} className="flex items-center gap-3 bg-white rounded-lg border border-gray-200 shadow-sm p-3">
-            <div className="flex items-center text-[#046cb8]">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-              </svg>
-            </div>
-            
-            <input
-              type="text"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="What would you like to know about traveling? Ask locals for instant answers..."
-              className="flex-1 border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500"
-            />
-            
-            <button
-              type="submit"
-              disabled={createQuestionMutation.isPending || !question.trim()}
-              className="bg-[#046cb8] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#035a9e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {createQuestionMutation.isPending ? 'Asking...' : 'Ask Question'}
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </form>
-
-          {message && (
-            <div className={`mt-3 p-3 rounded-lg text-sm ${
-              message.includes('Error') 
-                ? 'bg-red-50 text-red-700 border border-red-200' 
-                : 'bg-green-50 text-green-700 border border-green-200'
-            }`}>
-              {message}
-            </div>
-          )}
-
-          {/* Category Pills */}
-          <div className="mt-4 flex justify-center">
-            <div className="flex flex-wrap gap-2">
-              {[
-                { id: 1, name: 'Transport', icon: '🚗' },
-                { id: 2, name: 'Food', icon: '🍽️' },
-                { id: 3, name: 'Accommodation', icon: '🏨' },
-                { id: 4, name: 'Attractions', icon: '🎯' },
-                { id: 5, name: 'Culture', icon: '🎭' }
-              ].map((category) => {
-                const isSelected = selectedCategoryIds.includes(category.id);
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (createQuestionMutation.isPending) return;
-                      
-                      const newSelection = isSelected
-                        ? selectedCategoryIds.filter(id => id !== category.id)
-                        : [...selectedCategoryIds, category.id];
-                      
-                      setSelectedCategoryIds(newSelection);
-                    }}
-                    disabled={createQuestionMutation.isPending}
-                    className={`
-                      flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200
-                      ${isSelected
-                        ? 'bg-[#046cb8] text-white shadow-sm'
-                        : 'bg-white text-gray-600 hover:bg-[#046cb8]/10 hover:text-[#046cb8] border border-gray-200'
-                      }
-                      ${createQuestionMutation.isPending 
-                        ? 'opacity-50 cursor-not-allowed' 
-                        : 'cursor-pointer'
-                      }
-                    `}
-                  >
-                    <span className="text-sm">{category.icon}</span>
-                    <span>{category.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Three-Column Layout */}
-      <div className="bg-gradient-to-br from-blue-50/30 to-white pt-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex gap-6">
+      {/* Main Content Area - Three Column Layout */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="flex gap-6">
           
-          {/* Left Sidebar - Navigation (Reddit style) */}
+          {/* Left Sidebar - User Profile & Navigation */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-[#046cb8]/20 sticky top-20 space-y-2">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3">Menu</h3>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                </svg>
-                Home
-              </button>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                </svg>
-                Popular
-              </button>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-                </svg>
-                My Questions
-              </button>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-                All Categories
-              </button>
+            <div className="sticky top-20 space-y-4">
               
-              <div className="pt-4 mt-4 border-t border-gray-100">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3">Categories</h3>
-                {[
-                  { name: 'Transport', icon: '🚗' },
-                  { name: 'Food', icon: '🍽️' },
-                  { name: 'Accommodation', icon: '🏨' },
-                  { name: 'Attractions', icon: '🎯' },
-                  { name: 'Culture', icon: '🎭' }
-                ].map((cat) => (
-                  <button
-                    key={cat.name}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg text-sm transition-colors"
-                  >
-                    <span className="text-lg">{cat.icon}</span>
-                    <span>{cat.name}</span>
-                  </button>
-                ))}
+              {/* User Profile Card */}
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                <SignedIn>
+                  <div className="text-center">
+                    <div className="relative inline-block mb-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-full flex items-center justify-center mx-auto">
+                        <span className="text-white text-xl font-bold">
+                          {user?.firstName?.charAt(0) || user?.emailAddresses[0]?.emailAddress?.charAt(0) || 'U'}
+                        </span>
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
+                    </div>
+                    <h3 className="font-semibold text-gray-900 text-lg">
+                      {user?.firstName || 'User'} {user?.lastName || ''}
+                    </h3>
+                    <p className="text-gray-500 text-sm">@{user?.emailAddresses[0]?.emailAddress?.split('@')[0] || 'user'}</p>
+                  </div>
+                </SignedIn>
+                
+                <SignedOut>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-gray-900 text-lg">Guest User</h3>
+                    <p className="text-gray-500 text-sm">Sign in to join the community</p>
+                  </div>
+                </SignedOut>
+              </div>
+
+                  {/* Navigation Menu */}
+                  <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200">
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Menu</h3>
+                    <nav className="space-y-1">
+                      <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-900 bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                        </svg>
+                        <span className="text-sm">Home</span>
+                      </button>
+                      <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" />
+                        </svg>
+                        <span className="text-sm">Popular Destinations</span>
+                        <span className="ml-auto bg-black text-white text-xs px-1.5 py-0.5 rounded-full">24</span>
+                      </button>
+                      <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-sm">My Travel Questions</span>
+                      </button>
+                      <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                        </svg>
+                        <span className="text-sm">Verified Locals</span>
+                      </button>
+                    </nav>
+                  </div>
+
+              {/* Travel Tips Card */}
+              <div className="bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-xl p-4 text-white">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-sm mb-2">Travel Tips</h3>
+                  <p className="text-white/80 text-xs mb-3">Get instant answers from verified locals</p>
+                  <div className="flex justify-center gap-1">
+                    <span className="text-lg">✈️</span>
+                    <span className="text-lg">🏨</span>
+                    <span className="text-lg">🍽️</span>
+                    <span className="text-lg">🎯</span>
+                  </div>
+                </div>
               </div>
             </div>
           </aside>
 
           {/* Center - Questions Feed */}
           <main className="flex-1 min-w-0">
-            <QuestionsList 
-              questions={questions || []}
-              loading={isLoading}
-            />
+            {/* Ask Question Section */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6">
+              <form onSubmit={handleSubmit}>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-[#046cb8] rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-sm font-medium">
+                      {user?.firstName?.charAt(0) || '?'}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <textarea
+                      value={question}
+                      onChange={(e) => setQuestion(e.target.value)}
+                      placeholder="Ask locals about destinations, prices, recommendations, or travel tips..."
+                      className="w-full border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500 resize-none text-lg bg-blue-50/30 rounded-lg p-3"
+                      rows={3}
+                    />
+                    
+                    {/* Category Pills */}
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {[
+                        { id: 1, name: 'Transport', bgColor: 'bg-purple-100', textColor: 'text-purple-700' },
+                        { id: 2, name: 'Food', bgColor: 'bg-orange-100', textColor: 'text-orange-700' },
+                        { id: 3, name: 'Accommodation', bgColor: 'bg-blue-100', textColor: 'text-blue-700' },
+                        { id: 4, name: 'Attractions', bgColor: 'bg-green-100', textColor: 'text-green-700' },
+                        { id: 5, name: 'Culture', bgColor: 'bg-pink-100', textColor: 'text-pink-700' }
+                      ].map((category) => {
+                        const isSelected = selectedCategoryIds.includes(category.id);
+                        return (
+                          <button
+                            key={category.id}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (createQuestionMutation.isPending) return;
+                              
+                              const newSelection = isSelected
+                                ? selectedCategoryIds.filter(id => id !== category.id)
+                                : [...selectedCategoryIds, category.id];
+                              
+                              setSelectedCategoryIds(newSelection);
+                            }}
+                            disabled={createQuestionMutation.isPending}
+                            className={`
+                              px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200
+                              ${isSelected
+                                ? `${category.bgColor} ${category.textColor} shadow-sm border-2 border-current`
+                                : `${category.bgColor} ${category.textColor} hover:opacity-80`
+                              }
+                              ${createQuestionMutation.isPending 
+                                ? 'opacity-50 cursor-not-allowed' 
+                                : 'cursor-pointer'
+                              }
+                            `}
+                          >
+                            {category.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-3">
+                  <div className="flex items-center gap-4">
+                    <button type="button" className="flex items-center gap-1.5 text-gray-500 hover:text-[#046cb8] transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm">Photos</span>
+                    </button>
+                    <button type="button" className="flex items-center gap-1.5 text-gray-500 hover:text-[#046cb8] transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm">Destination</span>
+                    </button>
+                    <button type="button" className="flex items-center gap-1.5 text-gray-500 hover:text-[#046cb8] transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm">Urgent</span>
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={createQuestionMutation.isPending || !question.trim()}
+                    className="bg-[#046cb8] text-white px-5 py-2 rounded-lg font-medium hover:bg-[#035a9e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                    Send
+                  </button>
+                </div>
+              </form>
+
+              {message && (
+                <div className={`mt-3 p-3 rounded-lg text-sm ${
+                  message.includes('Error') 
+                    ? 'bg-red-50 text-red-700 border border-red-200' 
+                    : 'bg-green-50 text-green-700 border border-green-200'
+                }`}>
+                  {message}
+                </div>
+              )}
+            </div>
+
+            {/* Questions Feed */}
+            <div className="space-y-4">
+              <QuestionsList 
+                questions={questions || []}
+                loading={isLoading}
+              />
+            </div>
       </main>
   
-          {/* Right Sidebar - How It Works Cards */}
+          {/* Right Sidebar - Stories, Suggestions, Recommendations */}
           <aside className="hidden xl:block w-72 flex-shrink-0">
-            <div className="sticky top-20 space-y-3">
+            <div className="sticky top-20 space-y-4">
               
-              {/* Card 1 - Ask Question */}
-              <div className="bg-gradient-to-br from-blue-50 to-white rounded-lg p-4 border border-[#046cb8]/30 hover:shadow-md transition-all duration-200">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 bg-[#046cb8] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-                    </svg>
+              {/* Active Locals */}
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                <h3 className="font-semibold text-gray-900 mb-3">Active Locals</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-medium">AP</span>
+                      </div>
+                      <div className="absolute inset-0 rounded-full border-2 border-green-500"></div>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">Ana - Tokyo</p>
+                      <p className="text-gray-500 text-xs">Online now</p>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-[#046cb8] text-xs font-semibold">STEP 01</div>
-                    <h3 className="text-sm font-bold text-gray-900">Ask Your Question</h3>
-                  </div>
-                </div>
-                <p className="text-gray-600 text-xs leading-relaxed pl-11">
-                  Post with categories and get instant answers from verified locals worldwide.
-                </p>
-              </div>
-
-              {/* Card 2 - Get Answers */}
-              <div className="bg-gradient-to-br from-green-50 to-white rounded-lg p-4 border border-[#046cb8]/30 hover:shadow-md transition-all duration-200">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 bg-[#046cb8] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-[#046cb8] text-xs font-semibold">STEP 02</div>
-                    <h3 className="text-sm font-bold text-gray-900">Get Local Insights</h3>
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-green-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-medium">LE</span>
+                      </div>
+                      <div className="absolute inset-0 rounded-full border-2 border-green-500"></div>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">Liam - Paris</p>
+                      <p className="text-gray-500 text-xs">2 hours ago</p>
+                    </div>
                   </div>
                 </div>
-                <p className="text-gray-600 text-xs leading-relaxed pl-11">
-                  Authentic recommendations and transparent pricing from verified locals.
-                </p>
               </div>
 
-              {/* Card 3 - Travel Confidently */}
-              <div className="bg-gradient-to-br from-purple-50 to-white rounded-lg p-4 border border-[#046cb8]/30 hover:shadow-md transition-all duration-200">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 bg-[#046cb8] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-[#046cb8] text-xs font-semibold">STEP 03</div>
-                    <h3 className="text-sm font-bold text-gray-900">Travel Confidently</h3>
-                  </div>
+              {/* Popular Destinations */}
+              <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200">
+                <h3 className="font-semibold text-gray-900 mb-2 text-sm">Popular Destinations</h3>
+                <div className="space-y-2">
+                  {[
+                    { name: 'Tokyo, Japan', avatar: 'TJ', questions: '24' },
+                    { name: 'Paris, France', avatar: 'PF', questions: '18' },
+                    { name: 'New York, USA', avatar: 'NY', questions: '31' }
+                  ].map((destination, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-medium">{destination.avatar}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-xs truncate">{destination.name}</p>
+                        <p className="text-gray-500 text-xs">{destination.questions} q</p>
+                      </div>
+                      <button className="text-[#046cb8] hover:text-[#035a9e] text-xs font-medium transition-colors">
+                        Ask
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <p className="text-gray-600 text-xs leading-relaxed pl-11">
-                  Make informed decisions with trusted community-driven travel advice.
-                </p>
               </div>
 
-              {/* Stats Card */}
-              <div className="bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-lg p-5 text-white">
+              {/* Travel Categories */}
+              <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200">
+                <h3 className="font-semibold text-gray-900 mb-2 text-sm">Travel Categories</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { name: 'Transport', icon: '🚗' },
+                    { name: 'Food', icon: '🍽️' },
+                    { name: 'Hotels', icon: '🏨' },
+                    { name: 'Attractions', icon: '🎯' }
+                  ].map((category, index) => (
+                    <button key={index} className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                      <div className="w-8 h-8 bg-[#046cb8]/10 rounded-full flex items-center justify-center">
+                        <span className="text-lg">{category.icon}</span>
+                      </div>
+                      <span className="text-xs font-medium text-gray-700">{category.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Community Stats */}
+              <div className="bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-xl p-5 text-white">
                 <h3 className="font-semibold text-sm mb-3">Community Stats</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-white/90 text-xs">Questions</span>
                     <span className="font-bold text-lg">{questions?.length || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center mb-2">
                     <span className="text-white/90 text-xs">Answers</span>
                     <span className="font-bold text-lg">
                       {questions?.reduce((acc, q) => acc + (q.answers?.length || 0), 0) || 0}
@@ -349,7 +421,6 @@ export default function Home() {
               </div>
             </div>
           </aside>
-          </div>
         </div>
       </div>
 
