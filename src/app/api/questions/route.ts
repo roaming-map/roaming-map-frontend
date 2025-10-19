@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db'; 
-import { questions, users } from '@/db/schema';
+import { questions, users, questionsToCategories } from '@/db/schema';
 import { validateRequest, handleDatabaseError } from '@/utils/validation-helpers';
 import { createQuestionSchema } from '@/validations';
 import { auth } from '@clerk/nextjs/server';
@@ -90,10 +90,21 @@ export async function POST(req: Request) {
       createdBy: user.id,
     }).returning();
 
+    // Handle category relationships if categoryIds are provided
+    if (validatedData.categoryIds && validatedData.categoryIds.length > 0) {
+      const categoryRelations = validatedData.categoryIds.map(categoryId => ({
+        questionId: newQuestion[0].id,
+        categoryId: categoryId,
+      }));
+
+      await db.insert(questionsToCategories).values(categoryRelations);
+    }
+
     // Return the newly created question data in the response
     return NextResponse.json({
       message: 'Question posted successfully!',
       question: newQuestion[0],
+      categoryIds: validatedData.categoryIds || [],
     }, { status: 201 });
 
   } catch (error) {
