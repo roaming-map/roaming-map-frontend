@@ -63,9 +63,9 @@ const CategorySelector = ({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <label className="text-sm font-medium text-gray-700">
-        Categories (optional)
+        Select Categories (up to 3):
       </label>
       <div className="flex flex-wrap gap-2">
         {categories.map((category) => {
@@ -79,8 +79,8 @@ const CategorySelector = ({
               className={`
                 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
                 ${isSelected
-                  ? 'bg-blue-600 text-white shadow-md hover:bg-blue-700'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                  ? 'bg-[#046cb8] text-white shadow-md hover:bg-[#046cb8]/90'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                 }
                 ${disabled 
                   ? 'opacity-50 cursor-not-allowed' 

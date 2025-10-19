@@ -85,7 +85,8 @@ export function useCreateQuestion() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create question');
+        console.error('API Error:', error);
+        throw new Error(error.error || `Failed to create question (Status: ${response.status})`);
       }
 
       return response.json();

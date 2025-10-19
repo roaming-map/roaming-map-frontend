@@ -25,9 +25,14 @@ export async function GET() {
           },
         },
         
-        // Include answers for count
-        answers: true,
+        // Include answers with user information
+        answers: {
+          with: {
+            user: true,
+          },
+        },
       },
+      orderBy: (questions, { desc }) => [desc(questions.createdAt)],
     });
 
     return NextResponse.json(allQuestions);
@@ -54,6 +59,7 @@ export async function POST(req: Request) {
     const validation = await validateRequest(req, createQuestionSchema);
     
     if (!validation.success) {
+      console.error('Validation failed:', validation.error);
       return validation.error;
     }
     
@@ -66,46 +72,88 @@ export async function POST(req: Request) {
 
     if (!user) {
       // Create new user from Clerk data
-      const clerkUser = await fetch('https://api.clerk.com/v1/users/' + userId, {
-        headers: {
-          Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
-        },
-      }).then(res => res.json());
+      try {
+        if (!process.env.CLERK_SECRET_KEY) {
+          console.error('CLERK_SECRET_KEY is not set');
+          return NextResponse.json(
+            { error: 'Server configuration error' },
+            { status: 500 }
+          );
+        }
 
-      const [newUser] = await db.insert(users).values({
-        clerkId: userId,
-        email: clerkUser.email_addresses[0]?.email_address || '',
-        firstName: clerkUser.first_name,
-        lastName: clerkUser.last_name,
-        name: `${clerkUser.first_name || ''} ${clerkUser.last_name || ''}`.trim(),
-      }).returning();
+        const clerkResponse = await fetch('https://api.clerk.com/v1/users/' + userId, {
+          headers: {
+            Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
+          },
+        });
 
-      user = newUser;
+        if (!clerkResponse.ok) {
+          console.error('Clerk API error:', clerkResponse.status, await clerkResponse.text());
+          return NextResponse.json(
+            { error: 'Failed to fetch user data from Clerk' },
+            { status: 500 }
+          );
+        }
+
+        const clerkUser = await clerkResponse.json();
+
+        const [newUser] = await db.insert(users).values({
+          clerkId: userId,
+          email: clerkUser.email_addresses?.[0]?.email_address || '',
+          firstName: clerkUser.first_name || '',
+          lastName: clerkUser.last_name || '',
+          name: `${clerkUser.first_name || ''} ${clerkUser.last_name || ''}`.trim(),
+        }).returning();
+
+        user = newUser;
+      } catch (error) {
+        console.error('Error creating user:', error);
+        return NextResponse.json(
+          { error: 'Failed to create user' },
+          { status: 500 }
+        );
+      }
     }
 
     // Create the question with validated data
-    const newQuestion = await db.insert(questions).values({
-      question: validatedData.question,
-      isUrgent: validatedData.isUrgent,
-      createdBy: user.id,
-    }).returning();
+    try {
+      const newQuestion = await db.insert(questions).values({
+        question: validatedData.question,
+        isUrgent: validatedData.isUrgent,
+        createdBy: user.id,
+      }).returning();
 
-    // Handle category relationships if categoryIds are provided
-    if (validatedData.categoryIds && validatedData.categoryIds.length > 0) {
-      const categoryRelations = validatedData.categoryIds.map(categoryId => ({
-        questionId: newQuestion[0].id,
-        categoryId: categoryId,
-      }));
+      // Handle category relationships if categoryIds are provided
+      if (validatedData.categoryIds && validatedData.categoryIds.length > 0) {
+        try {
+          console.log('Inserting categories:', validatedData.categoryIds);
+          const categoryRelations = validatedData.categoryIds.map(categoryId => ({
+            questionId: newQuestion[0].id,
+            categoryId: categoryId,
+          }));
 
-      await db.insert(questionsToCategories).values(categoryRelations);
+          console.log('Category relations:', categoryRelations);
+          await db.insert(questionsToCategories).values(categoryRelations);
+          console.log('Categories inserted successfully');
+        } catch (categoryError) {
+          console.error('Error inserting categories:', categoryError);
+          // Don't fail the entire request if categories fail
+        }
+      }
+
+      // Return the newly created question data in the response
+      return NextResponse.json({
+        message: 'Question posted successfully!',
+        question: newQuestion[0],
+        categoryIds: validatedData.categoryIds || [],
+      }, { status: 201 });
+    } catch (error) {
+      console.error('Error creating question:', error);
+      return NextResponse.json(
+        { error: 'Failed to create question in database' },
+        { status: 500 }
+      );
     }
-
-    // Return the newly created question data in the response
-    return NextResponse.json({
-      message: 'Question posted successfully!',
-      question: newQuestion[0],
-      categoryIds: validatedData.categoryIds || [],
-    }, { status: 201 });
 
   } catch (error) {
     return handleDatabaseError(error, 'post question');
