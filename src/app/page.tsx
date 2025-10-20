@@ -18,6 +18,7 @@ export default function Home() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [message, setMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showCategoryError, setShowCategoryError] = useState(false);
 
   // TanStack Query hooks
   const { data: questions, isLoading, error } = useQuestions();
@@ -28,6 +29,13 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
+    setShowCategoryError(false);
+
+    // Gentle validation - only show error if user tries to submit without category
+    if (selectedCategoryIds.length === 0) {
+      setShowCategoryError(true);
+      return;
+    }
 
     try {
       await createQuestionMutation.mutateAsync({
@@ -220,6 +228,17 @@ export default function Home() {
                     
                     {/* Category Pills */}
                     <div className="flex flex-wrap gap-1.5 mt-3">
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <span>Categories</span>
+                        <div className="relative group">
+                          <svg className="w-3 h-3 text-gray-400 cursor-help" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                          </svg>
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                            Required
+                          </div>
+                        </div>
+                      </div>
                       {categories?.map((category) => {
                         const isSelected = selectedCategoryIds.includes(category.id);
                         const colors = getCategoryColors(category.category);
@@ -236,6 +255,7 @@ export default function Home() {
                                 : [...selectedCategoryIds, category.id];
                               
                               setSelectedCategoryIds(newSelection);
+                              setShowCategoryError(false); // Clear error when user selects category
                             }}
                             disabled={createQuestionMutation.isPending}
                             className={`
@@ -256,13 +276,13 @@ export default function Home() {
                       })}
                     </div>
                     
-                    {/* Category requirement message */}
-                    {selectedCategoryIds.length === 0 && question.trim() && (
+                    {/* Gentle category validation message */}
+                    {showCategoryError && (
                       <div className="mt-2 text-sm text-amber-600 flex items-center gap-1">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
-                        Please select at least one category
+                        Please select a category to post your question
                       </div>
                     )}
                   </div>
