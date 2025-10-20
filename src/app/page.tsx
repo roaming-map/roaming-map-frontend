@@ -421,19 +421,39 @@ export default function Home() {
               <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-2 text-sm">Travel Categories</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { name: 'Transport', icon: '🚗' },
-                    { name: 'Food', icon: '🍽️' },
-                    { name: 'Hotels', icon: '🏨' },
-                    { name: 'Attractions', icon: '🎯' }
-                  ].map((category, index) => (
-                    <button key={index} className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="w-8 h-8 bg-[#046cb8]/10 rounded-full flex items-center justify-center">
-                        <span className="text-lg">{category.icon}</span>
-                      </div>
-                      <span className="text-xs font-medium text-gray-700">{category.name}</span>
-                    </button>
-                  ))}
+                  {categories?.map((category) => {
+                    // Map category names to appropriate icons
+                    const getCategoryIcon = (categoryName: string) => {
+                      const iconMap: Record<string, string> = {
+                        'Transport': '🚗',
+                        'Food': '🍽️',
+                        'Accommodation': '🏨',
+                        'Attraction': '🎯',
+                        'Culture/Other': '🎭'
+                      };
+                      return iconMap[categoryName] || '📝';
+                    };
+
+                    return (
+                      <button 
+                        key={category.id} 
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                        onClick={() => {
+                          // Scroll to question form and focus on categories
+                          const questionForm = document.querySelector('textarea');
+                          if (questionForm) {
+                            questionForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            questionForm.focus();
+                          }
+                        }}
+                      >
+                        <div className="w-8 h-8 bg-[#046cb8]/10 rounded-full flex items-center justify-center">
+                          <span className="text-lg">{getCategoryIcon(category.category)}</span>
+                        </div>
+                        <span className="text-xs font-medium text-gray-700">{category.category}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
