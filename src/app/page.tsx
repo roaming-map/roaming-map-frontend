@@ -118,7 +118,7 @@ export default function Home() {
         <div className="flex gap-6">
           
           {/* Left Sidebar - User Profile & Navigation */}
-          <aside className="hidden lg:block w-64 flex-shrink-0">
+          <aside className="hidden lg:block w-56 flex-shrink-0">
             <div className="sticky top-20 space-y-4">
               
               {/* User Profile Card */}
@@ -302,14 +302,25 @@ export default function Home() {
                       </svg>
                       <span className="text-sm">Destination</span>
                     </button>
-                    <button type="button" className="flex items-center gap-1.5 text-gray-500 hover:text-[#046cb8] transition-colors">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm">Urgent</span>
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
+                    <button 
+                      type="button" 
+                      onClick={() => setIsUrgent(!isUrgent)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isUrgent 
+                          ? 'bg-red-100 text-red-700 border border-red-200 hover:bg-red-200' 
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                        isUrgent ? 'bg-red-500' : 'bg-gray-300'
+                      }`}>
+                        {isUrgent && (
+                          <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <span>Urgent</span>
                     </button>
                   </div>
                   
@@ -321,7 +332,7 @@ export default function Home() {
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
-                    Send
+                    Ask
                   </button>
                 </div>
               </form>
@@ -347,7 +358,7 @@ export default function Home() {
       </main>
   
           {/* Right Sidebar - Stories, Suggestions, Recommendations */}
-          <aside className="hidden xl:block w-72 flex-shrink-0">
+          <aside className="hidden xl:block w-64 flex-shrink-0">
             <div className="sticky top-20 space-y-4">
               
               {/* Active Locals */}

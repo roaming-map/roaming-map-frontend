@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { getCategoryColors } from '@/lib/category-colors';
+import { useCategories } from '@/hooks/api';
 
 interface Question {
   id: number;
@@ -50,6 +51,9 @@ const QuestionsList = ({ questions, loading }: QuestionsListProps) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
+  // Fetch categories dynamically
+  const { data: categories } = useCategories();
+
   const toggleAnswers = (questionId: number) => {
     const newExpanded = new Set(expandedAnswers);
     if (newExpanded.has(questionId)) {
@@ -87,8 +91,9 @@ const QuestionsList = ({ questions, loading }: QuestionsListProps) => {
 
       return (
         <div>
+          {/* Filter Buttons and Search Bar Row */}
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
               <button 
                 onClick={() => {
                   setSelectedCategory('');
@@ -102,96 +107,46 @@ const QuestionsList = ({ questions, loading }: QuestionsListProps) => {
               >
                 All
               </button>
-              <button
-                onClick={() => {
-                  setSelectedCategory('Transport');
-                  setSearchQuery('');
-                }}
-                className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                  selectedCategory === 'Transport' 
-                    ? 'text-gray-900 bg-[#046cb8]/10' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                Transport
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedCategory('Food');
-                  setSearchQuery('');
-                }}
-                className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                  selectedCategory === 'Food' 
-                    ? 'text-gray-900 bg-[#046cb8]/10' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                Food
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedCategory('Accommodation');
-                  setSearchQuery('');
-                }}
-                className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                  selectedCategory === 'Accommodation' 
-                    ? 'text-gray-900 bg-[#046cb8]/10' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                Hotels
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedCategory('Attraction');
-                  setSearchQuery('');
-                }}
-                className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                  selectedCategory === 'Attraction' 
-                    ? 'text-gray-900 bg-[#046cb8]/10' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                Attractions
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedCategory('Culture/Other');
-                  setSearchQuery('');
-                }}
-                className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                  selectedCategory === 'Culture/Other' 
-                    ? 'text-gray-900 bg-[#046cb8]/10' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                Culture
-              </button>
+              {categories?.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => {
+                    setSelectedCategory(category.category);
+                    setSearchQuery('');
+                  }}
+                  className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
+                    selectedCategory === category.category 
+                      ? 'text-gray-900 bg-[#046cb8]/10' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  {category.category}
+                </button>
+              ))}
             </div>
-            <div className="flex items-center gap-4">
-              <div className="relative w-48 flex-shrink-0 overflow-hidden">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-4 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-0 focus:outline-none focus:border-gray-300 w-full min-w-0"
-                  style={{ width: '100%', minWidth: 0 }}
-                />
-                <svg className="w-3 h-3 text-gray-400 absolute left-2.5 top-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                </svg>
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600"
-                  >
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                )}
-              </div>
+            
+            <div className="relative w-48 flex-shrink-0 overflow-hidden">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 pr-4 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-0 focus:outline-none focus:border-gray-300 w-full min-w-0"
+                style={{ width: '100%', minWidth: 0 }}
+              />
+              <svg className="w-3 h-3 text-gray-400 absolute left-2.5 top-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
       
