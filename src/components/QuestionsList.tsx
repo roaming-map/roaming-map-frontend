@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getCategoryColors } from '@/lib/category-colors';
 
 interface Question {
   id: number;
@@ -221,14 +222,17 @@ const QuestionsList = ({ questions, loading }: QuestionsListProps) => {
                   {/* Category Flags - Top Right */}
                   {q.questionsToCategories && q.questionsToCategories.length > 0 && (
                     <div className="absolute top-4 right-4 flex flex-wrap gap-1">
-                      {q.questionsToCategories.map((qtc) => (
-                        <span
-                          key={qtc.categoryId}
-                          className="px-2 py-1 bg-[#046cb8]/10 text-[#046cb8] text-xs rounded-full font-medium border border-[#046cb8]/20"
-                        >
-                          {qtc.category?.category}
-                        </span>
-                      ))}
+                      {q.questionsToCategories.map((qtc) => {
+                        const colors = getCategoryColors(qtc.category?.category || '');
+                        return (
+                          <span
+                            key={qtc.categoryId}
+                            className={`px-2 py-1 ${colors.bgColor} ${colors.textColor} text-xs rounded-full font-medium border ${colors.borderColor}`}
+                          >
+                            {qtc.category?.category}
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
                   
