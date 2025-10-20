@@ -315,7 +315,10 @@ const QuestionsList = ({ questions, loading }: QuestionsListProps) => {
                     {/* Fire Icon for Engagement */}
                     <div className="flex items-center gap-2">
                       <span className="text-lg">🔥</span>
-                      <span className="text-sm font-medium text-gray-700">{Math.floor(Math.random() * 50) + 5}</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        {/* TODO: Replace with real engagement metrics (views, helpful votes, etc.) */}
+                        {Math.floor(Math.random() * 50) + 5}
+                      </span>
                     </div>
                   </div>
             </div>

@@ -376,6 +376,7 @@ export default function Home() {
               {/* Active Locals */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-3">Active Locals</h3>
+                {/* TODO: Replace with real users who recently answered questions */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="relative">
@@ -407,6 +408,7 @@ export default function Home() {
               {/* Popular Destinations */}
               <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-2 text-sm">Popular Destinations</h3>
+                {/* TODO: Calculate from actual question categories or add destination field */}
                 <div className="space-y-2">
                   {[
                     { name: 'Tokyo, Japan', avatar: 'TJ', questions: '24' },
