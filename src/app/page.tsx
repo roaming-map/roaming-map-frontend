@@ -86,19 +86,7 @@ export default function Home() {
               
               {/* User Profile */}
               <SignedIn>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-[#046cb8] rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">
-                        {user?.firstName?.charAt(0) || user?.emailAddresses[0]?.emailAddress?.charAt(0) || 'U'}
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">
-                      {user?.firstName || 'User'}
-                    </span>
-                  </div>
-                  <UserButton afterSignOutUrl="/" />
-                </div>
+                <UserButton afterSignOutUrl="/" />
               </SignedIn>
               
               <SignedOut>
@@ -126,11 +114,23 @@ export default function Home() {
                 <SignedIn>
                   <div className="text-center">
                     <div className="relative inline-block mb-3">
-                      <div className="w-16 h-16 bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-full flex items-center justify-center mx-auto">
-                        <span className="text-white text-xl font-bold">
-                          {user?.firstName?.charAt(0) || user?.emailAddresses[0]?.emailAddress?.charAt(0) || 'U'}
-                        </span>
-                      </div>
+                      {user?.imageUrl ? (
+                        <div className="w-16 h-16 rounded-full overflow-hidden mx-auto border-2 border-white shadow-lg">
+                          <Image
+                            src={user.imageUrl}
+                            alt="Profile"
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-16 h-16 bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-full flex items-center justify-center mx-auto">
+                          <span className="text-white text-xl font-bold">
+                            {user?.firstName?.charAt(0) || user?.emailAddresses[0]?.emailAddress?.charAt(0) || 'U'}
+                          </span>
+                        </div>
+                      )}
                       <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
                     </div>
                     <h3 className="font-semibold text-gray-900 text-lg">
@@ -212,11 +212,23 @@ export default function Home() {
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6">
               <form onSubmit={handleSubmit}>
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-[#046cb8] rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-sm font-medium">
-                      {user?.firstName?.charAt(0) || '?'}
-                    </span>
-                  </div>
+                  {user?.imageUrl ? (
+                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
+                      <Image
+                        src={user.imageUrl}
+                        alt="Profile"
+                        width={40}
+                        height={40}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 bg-[#046cb8] rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-sm font-medium">
+                        {user?.firstName?.charAt(0) || '?'}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex-1">
                     <textarea
                       value={question}

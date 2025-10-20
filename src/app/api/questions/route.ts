@@ -70,7 +70,8 @@ export async function POST(req: Request) {
       where: eq(users.clerkId, userId),
     });
 
-    if (!user) {
+    // If user doesn't exist OR has demo data, fetch real data from Clerk
+    if (!user || user.name === 'Demo User') {
       // Create new user from Clerk data
       try {
         if (!process.env.CLERK_SECRET_KEY) {
@@ -97,15 +98,30 @@ export async function POST(req: Request) {
 
         const clerkUser = await clerkResponse.json();
 
-        const [newUser] = await db.insert(users).values({
-          clerkId: userId,
-          email: clerkUser.email_addresses?.[0]?.email_address || '',
-          firstName: clerkUser.first_name || '',
-          lastName: clerkUser.last_name || '',
-          name: `${clerkUser.first_name || ''} ${clerkUser.last_name || ''}`.trim(),
-        }).returning();
-
-        user = newUser;
+        if (!user) {
+          // Create new user
+          const [newUser] = await db.insert(users).values({
+            clerkId: userId,
+            email: clerkUser.email_addresses?.[0]?.email_address || '',
+            firstName: clerkUser.first_name || '',
+            lastName: clerkUser.last_name || '',
+            name: `${clerkUser.first_name || ''} ${clerkUser.last_name || ''}`.trim(),
+          }).returning();
+          user = newUser;
+        } else {
+          // Update existing demo user with real data
+          const [updatedUser] = await db.update(users)
+            .set({
+              email: clerkUser.email_addresses?.[0]?.email_address || '',
+              firstName: clerkUser.first_name || '',
+              lastName: clerkUser.last_name || '',
+              name: `${clerkUser.first_name || ''} ${clerkUser.last_name || ''}`.trim(),
+              updatedAt: new Date(),
+            })
+            .where(eq(users.clerkId, userId))
+            .returning();
+          user = updatedUser;
+        }
       } catch (error) {
         console.error('Error creating user:', error);
         return NextResponse.json(
