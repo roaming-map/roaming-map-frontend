@@ -7,10 +7,12 @@ import { auth } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
 
 // PUT /api/answers/[id] - Update an answer
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // Await params in Next.js 15+
+    const resolvedParams = await params;
     // Validate the answer ID from the URL path
-    const pathValidation = validatePathParams({ params }, answerIdSchema);
+    const pathValidation = validatePathParams({ params: resolvedParams }, answerIdSchema);
     
     if (!pathValidation.success) {
       return pathValidation.error;
@@ -109,10 +111,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 // DELETE /api/answers/[id] - Delete an answer
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // Await params in Next.js 15+
+    const resolvedParams = await params;
     // Validate the answer ID from the URL path
-    const pathValidation = validatePathParams({ params }, answerIdSchema);
+    const pathValidation = validatePathParams({ params: resolvedParams }, answerIdSchema);
     
     if (!pathValidation.success) {
       return pathValidation.error;
@@ -183,10 +187,12 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 }
 
 // PATCH /api/answers/[id] - Mark answer as helpful (or unhelpful)
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // Await params in Next.js 15+
+    const resolvedParams = await params;
     // Validate the answer ID from the URL path
-    const pathValidation = validatePathParams({ params }, answerIdSchema);
+    const pathValidation = validatePathParams({ params: resolvedParams }, answerIdSchema);
     
     if (!pathValidation.success) {
       return pathValidation.error;

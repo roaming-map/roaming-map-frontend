@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getCategoryColors } from '@/lib/category-colors';
 import { useCategories } from '@/hooks/api';
 
@@ -9,6 +9,7 @@ interface Question {
   question: string;
   destination: string | null;
   isUrgent: boolean;
+  usefulCount?: number;
   createdAt: string;
   createdBy: number | null;
   user?: {
@@ -24,6 +25,7 @@ interface Question {
     questionId: number;
     createdBy: number | null;
     createdAt: string;
+    helpfulCount?: number;
     user?: {
       id: number;
       name: string | null;
@@ -53,9 +55,57 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
   const [expandedAnswers, setExpandedAnswers] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [reactingQuestionId, setReactingQuestionId] = useState<number | null>(null);
+  const [questionUsefulCounts, setQuestionUsefulCounts] = useState<Record<number, number>>({});
 
   // Fetch categories dynamically
   const { data: categories } = useCategories();
+
+  // Initialize useful counts from questions
+  useEffect(() => {
+    const counts: Record<number, number> = {};
+    questions.forEach(q => {
+      if (q.usefulCount !== undefined) {
+        counts[q.id] = q.usefulCount;
+      }
+    });
+    setQuestionUsefulCounts(counts);
+  }, [questions]);
+
+  // Handle marking question as useful
+  const handleMarkUseful = async (questionId: number) => {
+    setReactingQuestionId(questionId);
+    
+    try {
+      const currentCount = questionUsefulCounts[questionId] || 0;
+      const isUseful = currentCount > 0; // If it has count, assume it's already marked
+      
+      const response = await fetch(`/api/questions/${questionId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isUseful: !isUseful, // Toggle
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setQuestionUsefulCounts(prev => ({
+          ...prev,
+          [questionId]: data.question.usefulCount || 0,
+        }));
+      } else {
+        const errorData = await response.json();
+        console.error('Error marking useful:', errorData.error);
+      }
+    } catch (error) {
+      console.error('Error marking useful:', error);
+    } finally {
+      setReactingQuestionId(null);
+    }
+  };
 
   const toggleAnswers = (questionId: number) => {
     const newExpanded = new Set(expandedAnswers);
@@ -344,14 +394,35 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
                       </button>
                     </div>
                     
-                    {/* Fire Icon for Engagement */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🔥</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {/* TODO: Replace with real engagement metrics (views, helpful votes, etc.) */}
-                        {Math.floor(Math.random() * 50) + 5}
+                    {/* Useful Reaction Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleMarkUseful(q.id);
+                      }}
+                      disabled={reactingQuestionId === q.id}
+                      className={`
+                        flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors
+                        ${(questionUsefulCounts[q.id] || q.usefulCount || 0) > 0 
+                          ? 'bg-blue-50 text-[#046cb8] hover:bg-blue-100' 
+                          : 'text-gray-600 hover:bg-gray-100'
+                        }
+                        ${reactingQuestionId === q.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                      `}
+                      style={{ minWidth: '80px' }}
+                    >
+                      <span className="text-base flex-shrink-0">👍</span>
+                      <span className="text-sm font-medium whitespace-nowrap">
+                        {reactingQuestionId === q.id 
+                          ? '...' 
+                          : (questionUsefulCounts[q.id] || q.usefulCount || 0) > 0
+                            ? `${questionUsefulCounts[q.id] || q.usefulCount || 0} useful`
+                            : 'Useful'
+                        }
                       </span>
-                    </div>
+                    </button>
                   </div>
             </div>
           ))}

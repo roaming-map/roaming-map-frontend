@@ -7,10 +7,12 @@ import { auth } from '@clerk/nextjs/server';
 import { eq, desc } from 'drizzle-orm';
 
 // GET /api/questions/[id]/answers - Get all answers for a specific question
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // Await params in Next.js 15+
+    const { id } = await params;
     // Parse and validate the question ID from the URL path
-    const questionId = parseInt(params.id, 10);
+    const questionId = parseInt(id, 10);
     
     if (isNaN(questionId) || questionId <= 0) {
       return NextResponse.json(
@@ -37,10 +39,12 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 // POST /api/questions/[id]/answers - Create a new answer for a specific question
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // Await params in Next.js 15+
+    const { id } = await params;
     // Parse and validate the question ID from the URL path
-    const questionId = parseInt(params.id, 10);
+    const questionId = parseInt(id, 10);
     
     if (isNaN(questionId) || questionId <= 0) {
       return NextResponse.json(

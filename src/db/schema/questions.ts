@@ -9,6 +9,7 @@ export const questions = pgTable('questions', {
   question: text('question').notNull(),
   destination: text('destination'), // City or place name
   isUrgent: boolean('is_urgent').default(false),
+  usefulCount: integer('useful_count').default(0), // Reaction count (like Facebook)
   createdAt: timestamp('created_at').defaultNow(),
   createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
 });

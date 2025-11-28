@@ -51,10 +51,13 @@ const QuestionDetailPage = () => {
       const response = await fetch(`/api/questions/${questionId}/answers`);
       if (response.ok) {
         const data = await response.json();
+        console.log('📋 Fetched answers:', data);
         setAnswers(data);
+      } else {
+        console.error('❌ Failed to fetch answers:', response.status);
       }
     } catch (error) {
-      console.error('Error fetching answers:', error);
+      console.error('❌ Error fetching answers:', error);
     }
   };
 
@@ -82,7 +85,18 @@ const QuestionDetailPage = () => {
         await fetchAnswers();
       } else {
         const errorData = await response.json();
-        setMessage(`Error: ${errorData.error}`);
+        
+        // Extract user-friendly error message
+        let errorMessage = 'Error submitting answer';
+        
+        if (errorData.details && Array.isArray(errorData.details) && errorData.details.length > 0) {
+          // Show the first validation error message
+          errorMessage = errorData.details[0].message || errorMessage;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        
+        setMessage(`Error: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
@@ -159,6 +173,7 @@ const QuestionDetailPage = () => {
         <AnswersList 
           answers={answers}
           loading={loading}
+          onAnswerUpdate={fetchAnswers}
         />
       </div>
     </div>

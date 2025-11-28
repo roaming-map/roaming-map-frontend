@@ -172,13 +172,6 @@ export default function Home() {
                   </button>
                   <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" />
-                    </svg>
-                    <span className="text-sm">Popular Destinations</span>
-                    <span className="ml-auto bg-black text-white text-xs px-1.5 py-0.5 rounded-full">24</span>
-                  </button>
-                  <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
                     </svg>
                     <span className="text-sm">My Travel Questions</span>
