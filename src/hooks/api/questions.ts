@@ -38,6 +38,7 @@ export const questionKeys = {
   list: (filters: Record<string, unknown>) => [...questionKeys.lists(), { filters }] as const,
   details: () => [...questionKeys.all, 'detail'] as const,
   detail: (id: number) => [...questionKeys.details(), id] as const,
+  destinations: () => [...questionKeys.all, 'destinations'] as const,
 };
 
 // Hook to fetch all questions
@@ -154,6 +155,19 @@ export function useDeleteQuestion() {
       queryClient.removeQueries({ queryKey: questionKeys.detail(deletedId) });
       // Invalidate questions list to refetch
       queryClient.invalidateQueries({ queryKey: questionKeys.lists() });
+    },
+  });
+}
+// Hook to fetch popular destinations
+export function usePopularDestinations() {
+  return useQuery({
+    queryKey: questionKeys.destinations(),
+    queryFn: async (): Promise<{ destination: string; count: number }[]> => {
+      const response = await fetch('/api/destinations/popular');
+      if (!response.ok) {
+        throw new Error('Failed to fetch popular destinations');
+      }
+      return response.json();
     },
   });
 }

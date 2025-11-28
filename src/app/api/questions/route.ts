@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/db/db'; 
+import { db } from '@/db/db';
 import { questions, users, questionsToCategories } from '@/db/schema';
 import { validateRequest, handleDatabaseError } from '@/utils/validation-helpers';
 import { createQuestionSchema } from '@/validations';
 import { auth } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm'; 
+import { eq } from 'drizzle-orm';
 
 
 export async function GET() {
@@ -15,7 +15,7 @@ export async function GET() {
       with: {
         // 'user' comes from the 'questionsRelations' object. 'true' means fetch it.
         user: true,
-        
+
         // 'questionsToCategories' also comes from 'questionsRelations'
         questionsToCategories: {
           // Once we have the join table data, we need to go one step further...
@@ -24,7 +24,7 @@ export async function GET() {
             category: true,
           },
         },
-        
+
         // Include answers with user information
         answers: {
           with: {
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   try {
     // Get the authenticated user from Clerk
     const { userId } = await auth();
-    
+
     if (!userId) {
       return NextResponse.json(
         {
@@ -57,12 +57,12 @@ export async function POST(req: Request) {
 
     // Validate the request body using Zod
     const validation = await validateRequest(req, createQuestionSchema);
-    
+
     if (!validation.success) {
       console.error('Validation failed:', validation.error);
       return validation.error;
     }
-    
+
     const validatedData = validation.data;
 
     // Find or create user in our database
@@ -135,6 +135,7 @@ export async function POST(req: Request) {
     try {
       const newQuestion = await db.insert(questions).values({
         question: validatedData.question,
+        destination: validatedData.destination,
         isUrgent: validatedData.isUrgent,
         createdBy: user.id,
       }).returning();

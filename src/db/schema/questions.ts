@@ -7,6 +7,7 @@ import { answers } from './answers';
 export const questions = pgTable('questions', {
   id: serial('id').primaryKey(),
   question: text('question').notNull(),
+  destination: text('destination'), // City or place name
   isUrgent: boolean('is_urgent').default(false),
   createdAt: timestamp('created_at').defaultNow(),
   createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
@@ -19,7 +20,7 @@ export const questionsRelations = relations(questions, ({ one, many }) => ({
   }),
 
   questionsToCategories: many(questionsToCategories),
-  
+
   // One question can have many answers
   answers: many(answers),
 }));

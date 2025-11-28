@@ -9,11 +9,12 @@ import Header from '@/components/Header';
 import QuestionForm from '@/components/QuestionForm';
 import QuestionsList from '@/components/QuestionsList';
 import CategorySelector from '@/components/CategorySelector';
-import { useQuestions, useCreateQuestion, useCategories, useStats, useActiveUsers } from "@/hooks/api";
+import { useQuestions, useCreateQuestion, useCategories, useStats, useActiveUsers, usePopularDestinations } from "@/hooks/api";
 import { getCategoryColors } from "@/lib/category-colors";
 
 export default function Home() {
   const [question, setQuestion] = useState('');
+  const [destination, setDestination] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [message, setMessage] = useState('');
@@ -25,6 +26,7 @@ export default function Home() {
   const { data: categories } = useCategories();
   const { data: stats } = useStats();
   const { data: activeUsers } = useActiveUsers();
+  const { data: popularDestinations } = usePopularDestinations();
   const createQuestionMutation = useCreateQuestion();
   const { user } = useUser();
 
@@ -42,12 +44,14 @@ export default function Home() {
     try {
       await createQuestionMutation.mutateAsync({
         question,
+        destination,
         isUrgent,
         categoryIds: selectedCategoryIds,
       });
 
       setMessage('✅ Question submitted successfully!');
       setQuestion('');
+      setDestination('');
       setIsUrgent(false);
       setSelectedCategoryIds([]);
 
@@ -213,140 +217,23 @@ export default function Home() {
             {/* Ask Question Section */}
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6">
               <form onSubmit={handleSubmit}>
-                <div className="flex items-start gap-3">
-                  {user?.imageUrl ? (
-                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
-                      <Image
-                        src={user.imageUrl}
-                        alt="Profile"
-                        width={40}
-                        height={40}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-10 h-10 bg-[#046cb8] rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-sm font-medium">
-                        {user?.firstName?.charAt(0) || '?'}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <textarea
-                      value={question}
-                      onChange={(e) => setQuestion(e.target.value)}
-                      placeholder="Ask locals about destinations, prices, recommendations, or travel tips..."
-                      className="w-full border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500 resize-none text-lg bg-blue-50/30 rounded-lg p-3"
-                      rows={3}
-                    />
-
-                    {/* Category Pills */}
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <span>Categories</span>
-                        <div className="relative group">
-                          <svg className="w-3 h-3 text-gray-400 cursor-help" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                          </svg>
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                            Required
-                          </div>
-                        </div>
-                      </div>
-                      {categories?.map((category) => {
-                        const isSelected = selectedCategoryIds.includes(category.id);
-                        const colors = getCategoryColors(category.category);
-                        return (
-                          <button
-                            key={category.id}
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              if (createQuestionMutation.isPending) return;
-
-                              const newSelection = isSelected
-                                ? selectedCategoryIds.filter(id => id !== category.id)
-                                : [...selectedCategoryIds, category.id];
-
-                              setSelectedCategoryIds(newSelection);
-                              setShowCategoryError(false); // Clear error when user selects category
-                            }}
-                            disabled={createQuestionMutation.isPending}
-                            className={`
-                              px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200
-                              ${isSelected
-                                ? `${colors.bgColor} ${colors.textColor} shadow-sm border-2 border-current`
-                                : `${colors.bgColor} ${colors.textColor} hover:opacity-80`
-                              }
-                              ${createQuestionMutation.isPending
-                                ? 'opacity-50 cursor-not-allowed'
-                                : 'cursor-pointer'
-                              }
-                            `}
-                          >
-                            {category.category}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Gentle category validation message */}
-                    {showCategoryError && (
-                      <div className="mt-2 text-sm text-amber-600 flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                        Please select a category to post your question
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-3">
-                  <div className="flex items-center gap-4">
-                    <button type="button" className="flex items-center gap-1.5 text-gray-500 hover:text-[#046cb8] transition-colors">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm">Photos</span>
-                    </button>
-                    <button type="button" className="flex items-center gap-1.5 text-gray-500 hover:text-[#046cb8] transition-colors">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm">Destination</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsUrgent(!isUrgent)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${isUrgent
-                        ? 'bg-red-100 text-red-700 border border-red-200 hover:bg-red-200'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                        }`}
-                    >
-                      <div className={`w-4 h-4 rounded-full flex items-center justify-center ${isUrgent ? 'bg-red-500' : 'bg-gray-300'
-                        }`}>
-                        {isUrgent && (
-                          <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                      <span>Urgent</span>
-                    </button>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={createQuestionMutation.isPending || !question.trim() || selectedCategoryIds.length === 0}
-                    className="bg-[#046cb8] text-white px-5 py-2 rounded-lg font-medium hover:bg-[#035a9e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                    Ask
-                  </button>
-                </div>
+                <QuestionForm
+                  question={question}
+                  destination={destination}
+                  isUrgent={isUrgent}
+                  selectedCategoryIds={selectedCategoryIds}
+                  setQuestion={setQuestion}
+                  setDestination={setDestination}
+                  setIsUrgent={setIsUrgent}
+                  setSelectedCategoryIds={setSelectedCategoryIds}
+                  handleSubmit={handleSubmit}
+                  submitting={createQuestionMutation.isPending}
+                  message={message}
+                  user={user}
+                  categories={categories || []}
+                  showCategoryError={showCategoryError}
+                  setShowCategoryError={setShowCategoryError}
+                />
               </form>
 
               {message && (
@@ -375,7 +262,6 @@ export default function Home() {
               {/* Active Locals */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-3">Active Locals</h3>
-                {/* TODO: Replace with real users who recently answered questions */}
                 <div className="space-y-3">
                   {activeUsers?.map((activeUser) => (
                     <div key={activeUser.id} className="flex items-center gap-3">
@@ -404,26 +290,26 @@ export default function Home() {
               {/* Popular Destinations */}
               <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-2 text-sm">Popular Destinations</h3>
-                {/* TODO: Calculate from actual question categories or add destination field */}
                 <div className="space-y-2">
-                  {[
-                    { name: 'Tokyo, Japan', avatar: 'TJ', questions: '24' },
-                    { name: 'Paris, France', avatar: 'PF', questions: '18' },
-                    { name: 'New York, USA', avatar: 'NY', questions: '31' }
-                  ].map((destination, index) => (
+                  {popularDestinations?.map((dest, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs font-medium">{destination.avatar}</span>
+                        <span className="text-white text-xs font-medium">
+                          {dest.destination.substring(0, 2).toUpperCase()}
+                        </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 text-xs truncate">{destination.name}</p>
-                        <p className="text-gray-500 text-xs">{destination.questions} q</p>
+                        <p className="font-medium text-gray-900 text-xs truncate">{dest.destination}</p>
+                        <p className="text-gray-500 text-xs">{dest.count} q</p>
                       </div>
                       <button className="text-[#046cb8] hover:text-[#035a9e] text-xs font-medium transition-colors">
                         Ask
                       </button>
                     </div>
                   ))}
+                  {(!popularDestinations || popularDestinations.length === 0) && (
+                    <p className="text-gray-500 text-sm">No popular destinations yet.</p>
+                  )}
                 </div>
               </div>
 
