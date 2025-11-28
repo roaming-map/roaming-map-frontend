@@ -95,6 +95,8 @@ export function useCreateQuestion() {
     onSuccess: () => {
       // Invalidate and refetch questions list
       queryClient.invalidateQueries({ queryKey: questionKeys.lists() });
+      // Also invalidate popular destinations since new question might have a destination
+      queryClient.invalidateQueries({ queryKey: questionKeys.destinations() });
     },
   });
 }

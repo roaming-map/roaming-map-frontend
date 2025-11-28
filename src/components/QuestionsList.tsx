@@ -7,6 +7,7 @@ import { useCategories } from '@/hooks/api';
 interface Question {
   id: number;
   question: string;
+  destination: string | null;
   isUrgent: boolean;
   createdAt: string;
   createdBy: number | null;
@@ -44,9 +45,11 @@ interface Question {
 interface QuestionsListProps {
   questions: Question[];
   loading: boolean;
+  selectedDestination?: string | null;
+  onDestinationChange?: (destination: string | null) => void;
 }
 
-const QuestionsList = ({ questions, loading }: QuestionsListProps) => {
+const QuestionsList = ({ questions, loading, selectedDestination, onDestinationChange }: QuestionsListProps) => {
   const [expandedAnswers, setExpandedAnswers] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -64,7 +67,7 @@ const QuestionsList = ({ questions, loading }: QuestionsListProps) => {
     setExpandedAnswers(newExpanded);
   };
 
-  // Filter questions based on search query and selected category
+  // Filter questions based on search query, selected category, and destination
   const filteredQuestions = questions.filter(question => {
     const matchesSearch = question.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       question.questionsToCategories?.some(qtc => 
@@ -76,7 +79,10 @@ const QuestionsList = ({ questions, loading }: QuestionsListProps) => {
         qtc.category?.category.toLowerCase() === selectedCategory.toLowerCase()
       );
     
-    return matchesSearch && matchesCategory;
+    const matchesDestination = !selectedDestination || 
+      (question.destination && question.destination.toLowerCase() === selectedDestination.toLowerCase());
+    
+    return matchesSearch && matchesCategory && matchesDestination;
   });
   if (loading) {
     return (
@@ -94,19 +100,34 @@ const QuestionsList = ({ questions, loading }: QuestionsListProps) => {
           {/* Filter Buttons and Search Bar Row */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <button 
-                onClick={() => {
-                  setSelectedCategory('');
-                  setSearchQuery('');
-                }}
-                className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                  !selectedCategory && !searchQuery 
-                    ? 'text-gray-900 bg-[#046cb8]/10' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
+            <button 
+              onClick={() => {
+                setSelectedCategory('');
+                setSearchQuery('');
+                onDestinationChange?.(null);
+              }}
+              className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
+                !selectedCategory && !searchQuery && !selectedDestination
+                  ? 'text-gray-900 bg-[#046cb8]/10' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              All
+            </button>
+            {selectedDestination && (
+              <button
+                onClick={() => onDestinationChange?.(null)}
+                className="px-2 py-1 text-xs font-medium rounded-lg transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-100 flex items-center gap-1"
               >
-                All
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                </svg>
+                {selectedDestination}
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
               </button>
+            )}
               {categories?.map((category) => (
                 <button
                   key={category.id}
@@ -202,12 +223,23 @@ const QuestionsList = ({ questions, loading }: QuestionsListProps) => {
                     
                     {/* Question Content */}
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <span className="text-gray-500 text-sm font-medium">
                           {q.user?.name || `${q.user?.firstName || 'Anonymous'} ${q.user?.lastName || ''}`}
                         </span>
                         <span className="text-gray-400">•</span>
                         <span className="text-gray-500 text-sm">{new Date(q.createdAt).toLocaleDateString()}</span>
+                        {q.destination && (
+                          <>
+                            <span className="text-gray-400">•</span>
+                            <span className="text-gray-400 text-xs flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                              </svg>
+                              {q.destination}
+                            </span>
+                          </>
+                        )}
                         {q.isUrgent && (
                           <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded-full">
                             Urgent

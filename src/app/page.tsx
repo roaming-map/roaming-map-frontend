@@ -20,6 +20,7 @@ export default function Home() {
   const [message, setMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCategoryError, setShowCategoryError] = useState(false);
+  const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
 
   // TanStack Query hooks
   const { data: questions, isLoading, error } = useQuestions();
@@ -248,9 +249,11 @@ export default function Home() {
 
             {/* Questions Feed */}
             <div className="space-y-4">
-              <QuestionsList
+              <QuestionsList 
                 questions={questions || []}
                 loading={isLoading}
+                selectedDestination={selectedDestination}
+                onDestinationChange={setSelectedDestination}
               />
             </div>
           </main>
@@ -292,20 +295,30 @@ export default function Home() {
                 <h3 className="font-semibold text-gray-900 mb-2 text-sm">Popular Destinations</h3>
                 <div className="space-y-2">
                   {popularDestinations?.map((dest, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-full flex items-center justify-center">
+                    <button
+                      key={index}
+                      onClick={() => {
+                        // Toggle: if already selected, deselect; otherwise select
+                        setSelectedDestination(
+                          selectedDestination === dest.destination ? null : dest.destination
+                        );
+                      }}
+                      className={`w-full flex items-center gap-2 rounded-lg p-1 transition-colors text-left ${
+                        selectedDestination === dest.destination 
+                          ? 'bg-[#046cb8]/10 hover:bg-[#046cb8]/20' 
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="w-8 h-8 bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-white text-xs font-medium">
                           {dest.destination.substring(0, 2).toUpperCase()}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 text-xs truncate">{dest.destination}</p>
-                        <p className="text-gray-500 text-xs">{dest.count} q</p>
+                        <p className="text-gray-500 text-xs">{dest.count} {dest.count === 1 ? 'question' : 'questions'}</p>
                       </div>
-                      <button className="text-[#046cb8] hover:text-[#035a9e] text-xs font-medium transition-colors">
-                        Ask
-                      </button>
-                    </div>
+                    </button>
                   ))}
                   {(!popularDestinations || popularDestinations.length === 0) && (
                     <p className="text-gray-500 text-sm">No popular destinations yet.</p>
