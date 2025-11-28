@@ -9,7 +9,7 @@ import Header from '@/components/Header';
 import QuestionForm from '@/components/QuestionForm';
 import QuestionsList from '@/components/QuestionsList';
 import CategorySelector from '@/components/CategorySelector';
-import { useQuestions, useCreateQuestion, useCategories } from "@/hooks/api";
+import { useQuestions, useCreateQuestion, useCategories, useStats, useActiveUsers } from "@/hooks/api";
 import { getCategoryColors } from "@/lib/category-colors";
 
 export default function Home() {
@@ -23,6 +23,8 @@ export default function Home() {
   // TanStack Query hooks
   const { data: questions, isLoading, error } = useQuestions();
   const { data: categories } = useCategories();
+  const { data: stats } = useStats();
+  const { data: activeUsers } = useActiveUsers();
   const createQuestionMutation = useCreateQuestion();
   const { user } = useUser();
 
@@ -43,19 +45,19 @@ export default function Home() {
         isUrgent,
         categoryIds: selectedCategoryIds,
       });
-      
+
       setMessage('✅ Question submitted successfully!');
       setQuestion('');
       setIsUrgent(false);
       setSelectedCategoryIds([]);
-      
+
       // Auto-dismiss success message after 3 seconds
       setTimeout(() => {
         setMessage('');
       }, 3000);
     } catch (error) {
       setMessage('❌ Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
-      
+
       // Auto-dismiss error message after 5 seconds
       setTimeout(() => {
         setMessage('');
@@ -83,12 +85,12 @@ export default function Home() {
               <a href="#" className="text-gray-600 hover:text-gray-900 text-sm font-medium">How it works</a>
               <a href="#" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Community</a>
               <a href="#" className="text-gray-600 hover:text-gray-900 text-sm font-medium">FAQ</a>
-              
+
               {/* User Profile */}
               <SignedIn>
                 <UserButton afterSignOutUrl="/" />
               </SignedIn>
-              
+
               <SignedOut>
                 <SignInButton mode="modal">
                   <button className="bg-[#046cb8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#046cb8]/90 transition-colors">
@@ -104,11 +106,11 @@ export default function Home() {
       {/* Main Content Area - Three Column Layout */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-6">
-          
+
           {/* Left Sidebar - User Profile & Navigation */}
           <aside className="hidden lg:block w-56 flex-shrink-0">
             <div className="sticky top-20 space-y-4">
-              
+
               {/* User Profile Card */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                 <SignedIn>
@@ -139,7 +141,7 @@ export default function Home() {
                     <p className="text-gray-500 text-sm">@{user?.emailAddresses[0]?.emailAddress?.split('@')[0] || 'user'}</p>
                   </div>
                 </SignedIn>
-                
+
                 <SignedOut>
                   <div className="text-center">
                     <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -153,37 +155,37 @@ export default function Home() {
                 </SignedOut>
               </div>
 
-                  {/* Navigation Menu */}
-                  <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Menu</h3>
-                    <nav className="space-y-1">
-                      <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-900 bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                        </svg>
-                        <span className="text-sm">Home</span>
-                      </button>
-                      <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" />
-                        </svg>
-                        <span className="text-sm">Popular Destinations</span>
-                        <span className="ml-auto bg-black text-white text-xs px-1.5 py-0.5 rounded-full">24</span>
-                      </button>
-                      <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-sm">My Travel Questions</span>
-                      </button>
-                      <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                        </svg>
-                        <span className="text-sm">Verified Locals</span>
-                      </button>
-                    </nav>
-                  </div>
+              {/* Navigation Menu */}
+              <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Menu</h3>
+                <nav className="space-y-1">
+                  <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-900 bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                    </svg>
+                    <span className="text-sm">Home</span>
+                  </button>
+                  <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" />
+                    </svg>
+                    <span className="text-sm">Popular Destinations</span>
+                    <span className="ml-auto bg-black text-white text-xs px-1.5 py-0.5 rounded-full">24</span>
+                  </button>
+                  <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-sm">My Travel Questions</span>
+                  </button>
+                  <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                    </svg>
+                    <span className="text-sm">Verified Locals</span>
+                  </button>
+                </nav>
+              </div>
 
               {/* Travel Tips Card */}
               <div className="bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-xl p-4 text-white">
@@ -237,7 +239,7 @@ export default function Home() {
                       className="w-full border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500 resize-none text-lg bg-blue-50/30 rounded-lg p-3"
                       rows={3}
                     />
-                    
+
                     {/* Category Pills */}
                     <div className="flex flex-wrap gap-1.5 mt-3">
                       <div className="flex items-center gap-1 text-xs text-gray-500">
@@ -261,11 +263,11 @@ export default function Home() {
                             onClick={(e) => {
                               e.preventDefault();
                               if (createQuestionMutation.isPending) return;
-                              
+
                               const newSelection = isSelected
                                 ? selectedCategoryIds.filter(id => id !== category.id)
                                 : [...selectedCategoryIds, category.id];
-                              
+
                               setSelectedCategoryIds(newSelection);
                               setShowCategoryError(false); // Clear error when user selects category
                             }}
@@ -276,8 +278,8 @@ export default function Home() {
                                 ? `${colors.bgColor} ${colors.textColor} shadow-sm border-2 border-current`
                                 : `${colors.bgColor} ${colors.textColor} hover:opacity-80`
                               }
-                              ${createQuestionMutation.isPending 
-                                ? 'opacity-50 cursor-not-allowed' 
+                              ${createQuestionMutation.isPending
+                                ? 'opacity-50 cursor-not-allowed'
                                 : 'cursor-pointer'
                               }
                             `}
@@ -287,7 +289,7 @@ export default function Home() {
                         );
                       })}
                     </div>
-                    
+
                     {/* Gentle category validation message */}
                     {showCategoryError && (
                       <div className="mt-2 text-sm text-amber-600 flex items-center gap-1">
@@ -299,7 +301,7 @@ export default function Home() {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-3">
                   <div className="flex items-center gap-4">
                     <button type="button" className="flex items-center gap-1.5 text-gray-500 hover:text-[#046cb8] transition-colors">
@@ -314,18 +316,16 @@ export default function Home() {
                       </svg>
                       <span className="text-sm">Destination</span>
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setIsUrgent(!isUrgent)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isUrgent 
-                          ? 'bg-red-100 text-red-700 border border-red-200 hover:bg-red-200' 
-                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                      }`}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${isUrgent
+                        ? 'bg-red-100 text-red-700 border border-red-200 hover:bg-red-200'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                        }`}
                     >
-                      <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                        isUrgent ? 'bg-red-500' : 'bg-gray-300'
-                      }`}>
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center ${isUrgent ? 'bg-red-500' : 'bg-gray-300'
+                        }`}>
                         {isUrgent && (
                           <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -335,7 +335,7 @@ export default function Home() {
                       <span>Urgent</span>
                     </button>
                   </div>
-                  
+
                   <button
                     type="submit"
                     disabled={createQuestionMutation.isPending || !question.trim() || selectedCategoryIds.length === 0}
@@ -350,11 +350,10 @@ export default function Home() {
               </form>
 
               {message && (
-                <div className={`mt-3 p-3 rounded-lg text-sm ${
-                  message.includes('Error') 
-                    ? 'bg-red-50 text-red-700 border border-red-200' 
-                    : 'bg-green-50 text-green-700 border border-green-200'
-                }`}>
+                <div className={`mt-3 p-3 rounded-lg text-sm ${message.includes('Error')
+                  ? 'bg-red-50 text-red-700 border border-red-200'
+                  : 'bg-green-50 text-green-700 border border-green-200'
+                  }`}>
                   {message}
                 </div>
               )}
@@ -362,46 +361,43 @@ export default function Home() {
 
             {/* Questions Feed */}
             <div className="space-y-4">
-              <QuestionsList 
+              <QuestionsList
                 questions={questions || []}
                 loading={isLoading}
               />
             </div>
-      </main>
-  
+          </main>
+
           {/* Right Sidebar - Stories, Suggestions, Recommendations */}
           <aside className="hidden xl:block w-64 flex-shrink-0">
             <div className="sticky top-20 space-y-4">
-              
+
               {/* Active Locals */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-3">Active Locals</h3>
                 {/* TODO: Replace with real users who recently answered questions */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-sm font-medium">AP</span>
+                  {activeUsers?.map((activeUser) => (
+                    <div key={activeUser.id} className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-medium">
+                            {activeUser.firstName?.charAt(0) || activeUser.name?.charAt(0) || 'U'}
+                          </span>
+                        </div>
+                        <div className="absolute inset-0 rounded-full border-2 border-green-500"></div>
                       </div>
-                      <div className="absolute inset-0 rounded-full border-2 border-green-500"></div>
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900 text-sm">Ana - Tokyo</p>
-                      <p className="text-gray-500 text-xs">Online now</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-green-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-sm font-medium">LE</span>
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">
+                          {activeUser.firstName || activeUser.name || 'User'}
+                        </p>
+                        <p className="text-gray-500 text-xs">Active recently</p>
                       </div>
-                      <div className="absolute inset-0 rounded-full border-2 border-green-500"></div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900 text-sm">Liam - Paris</p>
-                      <p className="text-gray-500 text-xs">2 hours ago</p>
-                    </div>
-                  </div>
+                  ))}
+                  {(!activeUsers || activeUsers.length === 0) && (
+                    <p className="text-gray-500 text-sm">No active locals yet.</p>
+                  )}
                 </div>
               </div>
 
@@ -449,8 +445,8 @@ export default function Home() {
                     };
 
                     return (
-                      <button 
-                        key={category.id} 
+                      <button
+                        key={category.id}
                         className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-50 transition-colors"
                         onClick={() => {
                           // Scroll to question form and focus on categories
@@ -477,17 +473,17 @@ export default function Home() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-white/90 text-xs">Questions</span>
-                    <span className="font-bold text-lg">{questions?.length || 0}</span>
+                    <span className="font-bold text-lg">{stats?.questions || 0}</span>
                   </div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-white/90 text-xs">Answers</span>
                     <span className="font-bold text-lg">
-                      {questions?.reduce((acc, q) => acc + (q.answers?.length || 0), 0) || 0}
+                      {stats?.answers || 0}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-white/90 text-xs">Active Locals</span>
-                    <span className="font-bold text-lg">190+</span>
+                    <span className="font-bold text-lg">{stats?.activeLocals || 0}</span>
                   </div>
                 </div>
               </div>

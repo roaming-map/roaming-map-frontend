@@ -21,7 +21,7 @@ export interface Question {
     categoryId: number;
     category: {
       id: number;
-      name: string;
+      category: string;
     };
   }>;
 }
@@ -103,12 +103,12 @@ export function useUpdateQuestion() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ 
-      id, 
-      data 
-    }: { 
-      id: number; 
-      data: UpdateQuestionData 
+    mutationFn: async ({
+      id,
+      data
+    }: {
+      id: number;
+      data: UpdateQuestionData
     }): Promise<Question> => {
       const response = await fetch(`/api/questions/${id}`, {
         method: 'PUT',

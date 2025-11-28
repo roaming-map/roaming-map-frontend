@@ -2,3 +2,4 @@
 export * from './questions';
 export * from './users';
 export * from './categories';
+export * from './stats';
