@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db';
-import { questions } from '@/db/schema';
-import { validatePathParams, validateRequest, handleDatabaseError } from '@/utils/validation-helpers';
+import { questions, users } from '@/db/schema';
+import { validatePathParams, validateRequest, handleDatabaseError, handleAuthError, handleForbiddenError } from '@/utils/validation-helpers';
 import { questionIdSchema, updateQuestionSchema } from '@/validations';
 import { eq } from 'drizzle-orm';
+import { auth } from '@clerk/nextjs/server';
 
 // GET /api/questions/[id] - Get a specific question by ID
 export async function GET(
@@ -81,6 +82,21 @@ export async function PUT(
 
     const validatedData = bodyValidation.data;
 
+    // Get authenticated user
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
+      return handleAuthError('Authentication required');
+    }
+
+    // Find user in database
+    const user = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkId),
+    });
+
+    if (!user) {
+      return handleAuthError('User not found');
+    }
+
     // Check if question exists
     const existingQuestion = await db.query.questions.findFirst({
       where: eq(questions.id, id),
@@ -93,6 +109,11 @@ export async function PUT(
         },
         { status: 404 }
       );
+    }
+
+    // Check ownership - only the creator can update
+    if (existingQuestion.createdBy !== user.id) {
+      return handleForbiddenError('You can only edit your own questions');
     }
 
     // Update the question
@@ -219,6 +240,21 @@ export async function DELETE(
       );
     }
 
+    // Get authenticated user
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
+      return handleAuthError('Authentication required');
+    }
+
+    // Find user in database
+    const user = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkId),
+    });
+
+    if (!user) {
+      return handleAuthError('User not found');
+    }
+
     // Check if question exists
     const existingQuestion = await db.query.questions.findFirst({
       where: eq(questions.id, id),
@@ -231,6 +267,11 @@ export async function DELETE(
         },
         { status: 404 }
       );
+    }
+
+    // Check ownership - only the creator can delete
+    if (existingQuestion.createdBy !== user.id) {
+      return handleForbiddenError('You can only delete your own questions');
     }
 
     // Delete the question

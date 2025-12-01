@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { getCategoryColors } from '@/lib/category-colors';
-import { useCategories } from '@/hooks/api';
+import { useCategories, useCurrentUser, useDeleteQuestion } from '@/hooks/api';
 
 interface Question {
   id: number;
@@ -49,17 +50,24 @@ interface QuestionsListProps {
   loading: boolean;
   selectedDestination?: string | null;
   onDestinationChange?: (destination: string | null) => void;
+  showMyQuestions?: boolean;
+  currentUserId?: number;
+  onClearMyQuestions?: () => void;
 }
 
-const QuestionsList = ({ questions, loading, selectedDestination, onDestinationChange }: QuestionsListProps) => {
+const QuestionsList = ({ questions, loading, selectedDestination, onDestinationChange, showMyQuestions, currentUserId, onClearMyQuestions }: QuestionsListProps) => {
+  const router = useRouter();
   const [expandedAnswers, setExpandedAnswers] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [reactingQuestionId, setReactingQuestionId] = useState<number | null>(null);
   const [questionUsefulCounts, setQuestionUsefulCounts] = useState<Record<number, number>>({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
   // Fetch categories dynamically
   const { data: categories } = useCategories();
+  const { data: currentUser } = useCurrentUser();
+  const deleteQuestionMutation = useDeleteQuestion();
 
   // Initialize useful counts from questions
   useEffect(() => {
@@ -117,8 +125,28 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
     setExpandedAnswers(newExpanded);
   };
 
-  // Filter questions based on search query, selected category, and destination
+  const handleDeleteQuestion = async (questionId: number) => {
+    try {
+      await deleteQuestionMutation.mutateAsync(questionId);
+      setShowDeleteConfirm(null);
+    } catch (error) {
+      console.error('Failed to delete question:', error);
+    }
+  };
+
+  const isQuestionOwner = (question: Question) => {
+    return currentUser && question.createdBy === currentUser.id;
+  };
+
+  // Filter questions based on search query, selected category, destination, and user filter
   const filteredQuestions = questions.filter(question => {
+    // Filter by "My Questions" if enabled
+    if (showMyQuestions && currentUserId) {
+      if (question.createdBy !== currentUserId) {
+        return false;
+      }
+    }
+    
     const matchesSearch = question.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       question.questionsToCategories?.some(qtc => 
         qtc.category?.category.toLowerCase().includes(searchQuery.toLowerCase())
@@ -155,9 +183,10 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
                 setSelectedCategory('');
                 setSearchQuery('');
                 onDestinationChange?.(null);
+                onClearMyQuestions?.();
               }}
               className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                !selectedCategory && !searchQuery && !selectedDestination
+                !selectedCategory && !searchQuery && !selectedDestination && !showMyQuestions
                   ? 'text-gray-900 bg-[#046cb8]/10' 
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
@@ -223,7 +252,15 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
       
       {filteredQuestions.length === 0 ? (
         <div className="text-center py-12">
-          {searchQuery ? (
+          {showMyQuestions ? (
+            <>
+              <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" />
+              </svg>
+              <p className="text-gray-500 text-lg">You haven&apos;t asked any questions yet</p>
+              <p className="text-gray-400 text-sm mt-1">Start by asking your first travel question!</p>
+            </>
+          ) : searchQuery ? (
             <>
               <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -245,9 +282,52 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
             <div className="space-y-4">
               {filteredQuestions.map((q) => (
                 <div key={q.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 relative">
-                  {/* Category Flags - Top Right */}
+                  {/* Owner Actions - Top Right */}
+                  {isQuestionOwner(q) && (
+                    <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          router.push(`/questions/${q.id}`);
+                        }}
+                        className="p-1.5 text-gray-500 hover:text-[#046cb8] hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit question"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (showDeleteConfirm === q.id) {
+                            handleDeleteQuestion(q.id);
+                          } else {
+                            setShowDeleteConfirm(q.id);
+                          }
+                        }}
+                        className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete question"
+                        disabled={deleteQuestionMutation.isPending && showDeleteConfirm === q.id}
+                      >
+                        {showDeleteConfirm === q.id ? (
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Category Flags - Below Owner Actions */}
                   {q.questionsToCategories && q.questionsToCategories.length > 0 && (
-                    <div className="absolute top-4 right-4 flex flex-wrap gap-1">
+                    <div className={`absolute top-4 flex flex-wrap gap-1 ${isQuestionOwner(q) ? 'right-20' : 'right-4'}`}>
                       {q.questionsToCategories.map((qtc) => {
                         const colors = getCategoryColors(qtc.category?.category || '');
                         return (
@@ -259,6 +339,36 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
                           </span>
                         );
                       })}
+                    </div>
+                  )}
+                  
+                  {/* Delete Confirmation */}
+                  {showDeleteConfirm === q.id && (
+                    <div className="absolute top-12 right-4 bg-white border border-red-200 rounded-lg shadow-lg p-3 z-20 min-w-[200px]">
+                      <p className="text-sm text-gray-700 mb-2">Delete this question?</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDeleteQuestion(q.id);
+                          }}
+                          className="flex-1 px-3 py-1.5 bg-red-600 text-white text-xs rounded-md hover:bg-red-700 transition-colors"
+                          disabled={deleteQuestionMutation.isPending}
+                        >
+                          {deleteQuestionMutation.isPending ? 'Deleting...' : 'Delete'}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowDeleteConfirm(null);
+                          }}
+                          className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-md hover:bg-gray-200 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   )}
                   

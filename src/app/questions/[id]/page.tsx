@@ -1,25 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
+import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/nextjs';
 import { QuestionDetail } from '@/components/questions/QuestionDetail';
 import AnswerForm from '@/components/questions/AnswerForm';
 import AnswersList from '@/components/questions/AnswersList';
-
-interface Question {
-  id: number;
-  question: string;
-  isUrgent: boolean;
-  createdAt: string;
-  createdBy: number | null;
-  user?: {
-    id: number;
-    firstName: string;
-    lastName: string;
-  };
-}
 
 interface Answer {
   id: number;
@@ -38,6 +25,7 @@ interface Answer {
 
 const QuestionDetailPage = () => {
   const params = useParams();
+  const router = useRouter();
   const questionId = params.id as string;
 
   const [answers, setAnswers] = useState<Answer[]>([]);
@@ -46,7 +34,7 @@ const QuestionDetailPage = () => {
   const [message, setMessage] = useState('');
 
   // Fetch answers for the question
-  const fetchAnswers = async () => {
+  const fetchAnswers = useCallback(async () => {
     try {
       const response = await fetch(`/api/questions/${questionId}/answers`);
       if (response.ok) {
@@ -59,7 +47,7 @@ const QuestionDetailPage = () => {
     } catch (error) {
       console.error('❌ Error fetching answers:', error);
     }
-  };
+  }, [questionId]);
 
   // Submit new answer
   const handleSubmitAnswer = async (content: string) => {
@@ -79,10 +67,14 @@ const QuestionDetailPage = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
         setMessage('Answer posted successfully!');
         // Refresh answers
         await fetchAnswers();
+        
+        // Auto-dismiss success message after 3 seconds
+        setTimeout(() => {
+          setMessage('');
+        }, 3000);
       } else {
         const errorData = await response.json();
         
@@ -97,10 +89,20 @@ const QuestionDetailPage = () => {
         }
         
         setMessage(`Error: ${errorMessage}`);
+        
+        // Auto-dismiss error message after 5 seconds
+        setTimeout(() => {
+          setMessage('');
+        }, 5000);
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
       setMessage('Error submitting answer');
+      
+      // Auto-dismiss error message after 5 seconds
+      setTimeout(() => {
+        setMessage('');
+      }, 5000);
     } finally {
       setSubmittingAnswer(false);
     }
@@ -117,52 +119,57 @@ const QuestionDetailPage = () => {
     if (questionId) {
       loadAnswers();
     }
-  }, [questionId]);
-
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return { date: 'Invalid Date', time: 'Invalid Date' };
-      }
-      return {
-        date: date.toLocaleDateString(),
-        time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
-      };
-    } catch (error) {
-      return { date: 'Invalid Date', time: 'Invalid Date' };
-    }
-  };
+  }, [questionId, fetchAnswers]);
 
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
-            <Image
-              src="/short-logo.png"
-              alt="Roaming Map Logo"
-              width={40}
-              height={40}
-              className="rounded-lg"
-            />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Roaming Map</h1>
-              <p className="text-gray-600">Travel Q&A Platform</p>
+      {/* Top Navigation Bar - Matching Homepage */}
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-3">
+              <button onClick={() => router.push('/')} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <Image
+                  src="/short-logo.png"
+                  alt="Roaming Map Logo"
+                  width={32}
+                  height={32}
+                  className="rounded-lg"
+                />
+                <span className="text-xl font-semibold text-[#046cb8]">Roaming Map</span>
+              </button>
+            </div>
+            <div className="flex items-center gap-6">
+              <button 
+                onClick={() => router.push('/')}
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+              >
+                ← Back to Home
+              </button>
+              <SignedIn>
+                <UserButton afterSignOutUrl="/" />
+              </SignedIn>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="bg-[#046cb8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#046cb8]/90 transition-colors">
+                    Sign In
+                  </button>
+                </SignInButton>
+              </SignedOut>
             </div>
           </div>
         </div>
-      </div>
+      </nav>
 
-      {/* Main Content */}
+      {/* Main Content - Matching Homepage Layout */}
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Question */}
+        {/* Question Card - Matching Homepage Style */}
         <div className="mb-6">
           <QuestionDetail questionId={parseInt(questionId)} />
         </div>
 
+        {/* Answer Form */}
         <AnswerForm 
           questionId={parseInt(questionId)}
           onSubmit={handleSubmitAnswer}
@@ -170,6 +177,7 @@ const QuestionDetailPage = () => {
           message={message}
         />
 
+        {/* Answers List */}
         <AnswersList 
           answers={answers}
           loading={loading}

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CreateQuestionData, UpdateQuestionData } from '@/validations/questions';
+import { userKeys } from './users';
 
 // Types based on your database schema
 export interface Question {
@@ -102,10 +103,14 @@ export function useCreateQuestion() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate and refetch questions list
+      // Invalidate all question-related queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: questionKeys.lists() });
-      // Also invalidate popular destinations since new question might have a destination
       queryClient.invalidateQueries({ queryKey: questionKeys.destinations() });
+      
+      // Invalidate stats (question count will increase)
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      
+      // Note: All related data will automatically refetch and update the UI
     },
   });
 }
@@ -135,13 +140,19 @@ export function useUpdateQuestion() {
         throw new Error(error.error || 'Failed to update question');
       }
 
-      return response.json();
+      const responseData = await response.json();
+      // Return the question object from the response
+      return responseData.question || responseData;
     },
     onSuccess: (updatedQuestion) => {
       // Update the specific question in cache
       queryClient.setQueryData(questionKeys.detail(updatedQuestion.id), updatedQuestion);
-      // Invalidate questions list to refetch
+      
+      // Invalidate all question-related queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: questionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: questionKeys.destinations() });
+      
+      // Note: Stats don't change on update, only on create/delete
     },
   });
 }
@@ -162,10 +173,21 @@ export function useDeleteQuestion() {
       }
     },
     onSuccess: (_, deletedId) => {
-      // Remove the question from cache
+      // Remove the deleted question from cache
       queryClient.removeQueries({ queryKey: questionKeys.detail(deletedId) });
-      // Invalidate questions list to refetch
+      
+      // Invalidate all question-related queries to ensure UI updates immediately
       queryClient.invalidateQueries({ queryKey: questionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: questionKeys.destinations() });
+      
+      // Invalidate stats (question count will decrease)
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      
+      // Invalidate active users (they might have only answered this deleted question)
+      queryClient.invalidateQueries({ queryKey: userKeys.active() });
+      
+      // Note: All related data (stats, destinations, active users, question list)
+      // will automatically refetch and update the UI without requiring a page refresh
     },
   });
 }

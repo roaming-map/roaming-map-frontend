@@ -9,7 +9,7 @@ import Header from '@/components/Header';
 import QuestionForm from '@/components/QuestionForm';
 import QuestionsList from '@/components/QuestionsList';
 import CategorySelector from '@/components/CategorySelector';
-import { useQuestions, useCreateQuestion, useCategories, useStats, useActiveUsers, usePopularDestinations } from "@/hooks/api";
+import { useQuestions, useCreateQuestion, useCategories, useStats, useActiveUsers, usePopularDestinations, useCurrentUser } from "@/hooks/api";
 import { getCategoryColors } from "@/lib/category-colors";
 
 export default function Home() {
@@ -21,6 +21,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCategoryError, setShowCategoryError] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
+  const [showMyQuestions, setShowMyQuestions] = useState(false);
 
   // TanStack Query hooks
   const { data: questions, isLoading, error } = useQuestions();
@@ -30,6 +31,7 @@ export default function Home() {
   const { data: popularDestinations } = usePopularDestinations();
   const createQuestionMutation = useCreateQuestion();
   const { user } = useUser();
+  const { data: currentUser } = useCurrentUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,20 +51,20 @@ export default function Home() {
         isUrgent,
         categoryIds: selectedCategoryIds,
       });
-
+      
       setMessage('✅ Question submitted successfully!');
       setQuestion('');
       setDestination('');
       setIsUrgent(false);
       setSelectedCategoryIds([]);
-
+      
       // Auto-dismiss success message after 3 seconds
       setTimeout(() => {
         setMessage('');
       }, 3000);
     } catch (error) {
       setMessage('❌ Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
-
+      
       // Auto-dismiss error message after 5 seconds
       setTimeout(() => {
         setMessage('');
@@ -90,12 +92,12 @@ export default function Home() {
               <a href="#" className="text-gray-600 hover:text-gray-900 text-sm font-medium">How it works</a>
               <a href="#" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Community</a>
               <a href="#" className="text-gray-600 hover:text-gray-900 text-sm font-medium">FAQ</a>
-
+              
               {/* User Profile */}
               <SignedIn>
-                <UserButton afterSignOutUrl="/" />
+                  <UserButton afterSignOutUrl="/" />
               </SignedIn>
-
+              
               <SignedOut>
                 <SignInButton mode="modal">
                   <button className="bg-[#046cb8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#046cb8]/90 transition-colors">
@@ -111,11 +113,11 @@ export default function Home() {
       {/* Main Content Area - Three Column Layout */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-6">
-
+          
           {/* Left Sidebar - User Profile & Navigation */}
           <aside className="hidden lg:block w-56 flex-shrink-0">
             <div className="sticky top-20 space-y-4">
-
+              
               {/* User Profile Card */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                 <SignedIn>
@@ -132,11 +134,11 @@ export default function Home() {
                           />
                         </div>
                       ) : (
-                        <div className="w-16 h-16 bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-full flex items-center justify-center mx-auto">
-                          <span className="text-white text-xl font-bold">
-                            {user?.firstName?.charAt(0) || user?.emailAddresses[0]?.emailAddress?.charAt(0) || 'U'}
-                          </span>
-                        </div>
+                      <div className="w-16 h-16 bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-full flex items-center justify-center mx-auto">
+                        <span className="text-white text-xl font-bold">
+                          {user?.firstName?.charAt(0) || user?.emailAddresses[0]?.emailAddress?.charAt(0) || 'U'}
+                        </span>
+                      </div>
                       )}
                       <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
                     </div>
@@ -146,7 +148,7 @@ export default function Home() {
                     <p className="text-gray-500 text-sm">@{user?.emailAddresses[0]?.emailAddress?.split('@')[0] || 'user'}</p>
                   </div>
                 </SignedIn>
-
+                
                 <SignedOut>
                   <div className="text-center">
                     <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -160,30 +162,40 @@ export default function Home() {
                 </SignedOut>
               </div>
 
-              {/* Navigation Menu */}
-              <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Menu</h3>
-                <nav className="space-y-1">
-                  <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-900 bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                    </svg>
-                    <span className="text-sm">Home</span>
-                  </button>
-                  <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-sm">My Travel Questions</span>
-                  </button>
-                  <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                    </svg>
-                    <span className="text-sm">Verified Locals</span>
-                  </button>
-                </nav>
-              </div>
+                  {/* Navigation Menu */}
+                  <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200">
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Menu</h3>
+                    <nav className="space-y-1">
+                      <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-900 bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                        </svg>
+                        <span className="text-sm">Home</span>
+                      </button>
+                  <button 
+                    onClick={() => {
+                      setShowMyQuestions(!showMyQuestions);
+                      setSelectedDestination(null); // Clear destination filter when toggling
+                    }}
+                    className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg font-medium transition-colors ${
+                      showMyQuestions
+                        ? 'text-gray-900 bg-[#046cb8]/10'
+                        : 'text-gray-700 hover:bg-[#046cb8]/10'
+                    }`}
+                  >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                        </svg>
+                    <span className="text-sm">My Questions</span>
+                      </button>
+                      <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                        </svg>
+                        <span className="text-sm">Verified Locals</span>
+                      </button>
+                    </nav>
+                  </div>
 
               {/* Travel Tips Card */}
               <div className="bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-xl p-4 text-white">
@@ -232,9 +244,9 @@ export default function Home() {
 
               {message && (
                 <div className={`mt-3 p-3 rounded-lg text-sm ${message.includes('Error')
-                  ? 'bg-red-50 text-red-700 border border-red-200'
-                  : 'bg-green-50 text-green-700 border border-green-200'
-                  }`}>
+                    ? 'bg-red-50 text-red-700 border border-red-200' 
+                    : 'bg-green-50 text-green-700 border border-green-200'
+                }`}>
                   {message}
                 </div>
               )}
@@ -247,29 +259,32 @@ export default function Home() {
                 loading={isLoading}
                 selectedDestination={selectedDestination}
                 onDestinationChange={setSelectedDestination}
+                showMyQuestions={showMyQuestions}
+                currentUserId={currentUser?.id}
+                onClearMyQuestions={() => setShowMyQuestions(false)}
               />
             </div>
-          </main>
-
+      </main>
+  
           {/* Right Sidebar - Stories, Suggestions, Recommendations */}
           <aside className="hidden xl:block w-64 flex-shrink-0">
             <div className="sticky top-20 space-y-4">
-
+              
               {/* Active Locals */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-3">Active Locals</h3>
                 <div className="space-y-3">
                   {activeUsers?.map((activeUser) => (
                     <div key={activeUser.id} className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
                           <span className="text-white text-sm font-medium">
                             {activeUser.firstName?.charAt(0) || activeUser.name?.charAt(0) || 'U'}
                           </span>
-                        </div>
-                        <div className="absolute inset-0 rounded-full border-2 border-green-500"></div>
                       </div>
-                      <div>
+                      <div className="absolute inset-0 rounded-full border-2 border-green-500"></div>
+                    </div>
+                    <div>
                         <p className="font-medium text-gray-900 text-sm">
                           {activeUser.firstName || activeUser.name || 'User'}
                         </p>
@@ -311,7 +326,7 @@ export default function Home() {
                         <p className="font-medium text-gray-900 text-xs truncate">{dest.destination}</p>
                         <p className="text-gray-500 text-xs">{dest.count} {dest.count === 1 ? 'question' : 'questions'}</p>
                       </div>
-                    </button>
+                      </button>
                   ))}
                   {(!popularDestinations || popularDestinations.length === 0) && (
                     <p className="text-gray-500 text-sm">No popular destinations yet.</p>
@@ -349,11 +364,11 @@ export default function Home() {
                           }
                         }}
                       >
-                        <div className="w-8 h-8 bg-[#046cb8]/10 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-[#046cb8]/10 rounded-full flex items-center justify-center">
                           <span className="text-lg">{getCategoryIcon(category.category)}</span>
-                        </div>
+                      </div>
                         <span className="text-xs font-medium text-gray-700">{category.category}</span>
-                      </button>
+                    </button>
                     );
                   })}
                 </div>
