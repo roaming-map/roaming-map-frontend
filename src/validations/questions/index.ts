@@ -6,7 +6,9 @@ export const createQuestionSchema = z.object({
     .min(1, 'Question is required')
     .min(10, 'Question must be at least 10 characters long')
     .max(1000, 'Question must not exceed 1000 characters'),
+  destination: z.string().optional(),
   isUrgent: z.boolean().optional().default(false),
+  categoryIds: z.array(z.number().int().positive('Invalid category ID')).optional().default([]),
 });
 
 // Schema for updating a question (createdBy cannot be changed)

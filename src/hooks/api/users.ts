@@ -18,6 +18,8 @@ export const userKeys = {
   lists: () => [...userKeys.all, 'list'] as const,
   details: () => [...userKeys.all, 'detail'] as const,
   detail: (id: number) => [...userKeys.details(), id] as const,
+  active: () => [...userKeys.all, 'active'] as const,
+  me: () => [...userKeys.all, 'me'] as const,
 };
 
 // Hook to fetch all users
@@ -46,5 +48,33 @@ export function useUser(id: number) {
       return response.json();
     },
     enabled: !!id, // Only run query if id is provided
+  });
+}
+// Hook to fetch active users
+export function useActiveUsers() {
+  return useQuery({
+    queryKey: userKeys.active(),
+    queryFn: async (): Promise<User[]> => {
+      const response = await fetch('/api/users/active');
+      if (!response.ok) {
+        throw new Error('Failed to fetch active users');
+      }
+      return response.json();
+    },
+  });
+}
+
+// Hook to fetch the current authenticated user's database record
+export function useCurrentUser() {
+  return useQuery({
+    queryKey: userKeys.me(),
+    queryFn: async (): Promise<User> => {
+      const response = await fetch('/api/users/me');
+      if (!response.ok) {
+        throw new Error('Failed to fetch current user');
+      }
+      return response.json();
+    },
+    retry: false, // Don't retry if user is not authenticated
   });
 }
