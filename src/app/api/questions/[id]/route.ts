@@ -116,13 +116,12 @@ export async function PUT(
       return handleForbiddenError('You can only edit your own questions');
     }
 
-    // Update the question
-    const updatedQuestion = await db
+    // Update the question (createdBy cannot be changed)
+    await db
       .update(questions)
       .set({
         ...(validatedData.question && { question: validatedData.question }),
         ...(validatedData.isUrgent !== undefined && { isUrgent: validatedData.isUrgent }),
-        ...(validatedData.createdBy && { createdBy: validatedData.createdBy }),
       })
       .where(eq(questions.id, id))
       .returning();

@@ -1,5 +1,5 @@
 import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
-import { AuthButton, SignedInButton } from './AuthButton';
+import { AuthButton } from './AuthButton';
 
 export function Navigation() {
   const { user } = useUser();

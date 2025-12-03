@@ -1,24 +1,27 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db'; 
 import { answers, users } from '@/db/schema';
-import { validateRequest, handleDatabaseError, validatePathParams } from '@/utils/validation-helpers';
-import { updateAnswerSchema, answerIdSchema, markHelpfulSchema } from '@/validations';
+import { validateRequest, handleDatabaseError } from '@/utils/validation-helpers';
+import { updateAnswerSchema, markHelpfulSchema } from '@/validations';
 import { auth } from '@clerk/nextjs/server';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 // PUT /api/answers/[id] - Update an answer
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Await params in Next.js 15+
     const resolvedParams = await params;
-    // Validate the answer ID from the URL path
-    const pathValidation = validatePathParams({ params: resolvedParams }, answerIdSchema);
+    // Parse and validate the answer ID from the URL path
+    const answerId = parseInt(resolvedParams.id, 10);
     
-    if (!pathValidation.success) {
-      return pathValidation.error;
+    if (isNaN(answerId) || answerId <= 0) {
+      return NextResponse.json(
+        {
+          error: 'Invalid answer ID',
+        },
+        { status: 400 }
+      );
     }
-    
-    const { id: answerId } = pathValidation.data;
 
     // Get the authenticated user from Clerk
     const { userId } = await auth();
@@ -115,14 +118,17 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   try {
     // Await params in Next.js 15+
     const resolvedParams = await params;
-    // Validate the answer ID from the URL path
-    const pathValidation = validatePathParams({ params: resolvedParams }, answerIdSchema);
+    // Parse and validate the answer ID from the URL path
+    const answerId = parseInt(resolvedParams.id, 10);
     
-    if (!pathValidation.success) {
-      return pathValidation.error;
+    if (isNaN(answerId) || answerId <= 0) {
+      return NextResponse.json(
+        {
+          error: 'Invalid answer ID',
+        },
+        { status: 400 }
+      );
     }
-    
-    const { id: answerId } = pathValidation.data;
 
     // Get the authenticated user from Clerk
     const { userId } = await auth();
@@ -191,14 +197,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   try {
     // Await params in Next.js 15+
     const resolvedParams = await params;
-    // Validate the answer ID from the URL path
-    const pathValidation = validatePathParams({ params: resolvedParams }, answerIdSchema);
+    // Parse and validate the answer ID from the URL path
+    const answerId = parseInt(resolvedParams.id, 10);
     
-    if (!pathValidation.success) {
-      return pathValidation.error;
+    if (isNaN(answerId) || answerId <= 0) {
+      return NextResponse.json(
+        {
+          error: 'Invalid answer ID',
+        },
+        { status: 400 }
+      );
     }
-    
-    const { id: answerId } = pathValidation.data;
 
     // Validate the request body using Zod
     const bodyValidation = await validateRequest(req, markHelpfulSchema);
@@ -224,9 +233,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     // Update the helpful count
+    const currentCount = existingAnswer.helpfulCount ?? 0;
     const newHelpfulCount = isHelpful 
-      ? existingAnswer.helpfulCount + 1 
-      : Math.max(0, existingAnswer.helpfulCount - 1);
+      ? currentCount + 1 
+      : Math.max(0, currentCount - 1);
 
     // Update the answer
     const updatedAnswer = await db.update(answers)

@@ -75,7 +75,7 @@ const AnswersList = ({ answers, loading, onAnswerUpdate }: AnswersListProps) => 
         date: date.toLocaleDateString(),
         time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
       };
-    } catch (error) {
+    } catch {
       return { date: 'Invalid Date', time: 'Invalid Date' };
     }
   };
@@ -105,7 +105,7 @@ const AnswersList = ({ answers, loading, onAnswerUpdate }: AnswersListProps) => 
       {answers.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <p>No answers yet. Be the first to help!</p>
-          <p className="text-xs mt-2 text-gray-400">(Post an answer to see the "Mark Helpful" button)</p>
+          <p className="text-xs mt-2 text-gray-400">(Post an answer to see the &quot;Mark Helpful&quot; button)</p>
         </div>
       ) : (
         <div className="space-y-4">

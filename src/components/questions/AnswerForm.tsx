@@ -4,13 +4,12 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface AnswerFormProps {
-  questionId: number;
   onSubmit: (content: string) => Promise<void>;
   submitting: boolean;
   message: string;
 }
 
-const AnswerForm = ({ questionId, onSubmit, submitting, message }: AnswerFormProps) => {
+const AnswerForm = ({ onSubmit, submitting, message }: AnswerFormProps) => {
   const [answerContent, setAnswerContent] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {

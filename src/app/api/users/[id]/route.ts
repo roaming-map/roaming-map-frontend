@@ -1,23 +1,24 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/db';
 import { users } from '@/db/schema';
-import { validatePathParams, handleDatabaseError, handleNotFoundError } from '@/utils/validation-helpers';
-import { userIdSchema } from '@/validations';
+import { handleDatabaseError, handleNotFoundError } from '@/utils/validation-helpers';
 import { eq } from 'drizzle-orm';
 
 // GET /api/users/[id] - Get a specific user by ID
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
-    // Validate path parameters
-    const pathValidation = validatePathParams({ params }, userIdSchema);
-    if (!pathValidation.success) {
-      return pathValidation.error;
-    }
+    const { id: idParam } = await params;
+    const id = parseInt(idParam, 10);
     
-    const { id } = pathValidation.data;
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 400 }
+      );
+    }
 
     // Query the user with relations
     const user = await db.query.users.findFirst({

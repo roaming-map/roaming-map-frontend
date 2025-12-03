@@ -6,6 +6,7 @@ import { userKeys } from './users';
 export interface Question {
   id: number;
   question: string;
+  destination: string | null;
   isUrgent: boolean;
   createdAt: string;
   createdBy: number | null;

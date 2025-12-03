@@ -1,16 +1,11 @@
 'use client';
 
-import { Button } from "@/components/ui/button";
-import { Navigation } from "@/components/Navigation";
 import { SignedIn, SignedOut, UserButton, useUser, SignInButton } from '@clerk/nextjs';
 import { useState } from "react";
 import Image from "next/image";
-import Header from '@/components/Header';
 import QuestionForm from '@/components/QuestionForm';
 import QuestionsList from '@/components/QuestionsList';
-import CategorySelector from '@/components/CategorySelector';
 import { useQuestions, useCreateQuestion, useCategories, useStats, useActiveUsers, usePopularDestinations, useCurrentUser } from "@/hooks/api";
-import { getCategoryColors } from "@/lib/category-colors";
 
 export default function Home() {
   const [question, setQuestion] = useState('');
@@ -18,13 +13,12 @@ export default function Home() {
   const [isUrgent, setIsUrgent] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [message, setMessage] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [showCategoryError, setShowCategoryError] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
   const [showMyQuestions, setShowMyQuestions] = useState(false);
 
   // TanStack Query hooks
-  const { data: questions, isLoading, error } = useQuestions();
+  const { data: questions, isLoading } = useQuestions();
   const { data: categories } = useCategories();
   const { data: stats } = useStats();
   const { data: activeUsers } = useActiveUsers();
@@ -232,9 +226,7 @@ export default function Home() {
                   setDestination={setDestination}
                   setIsUrgent={setIsUrgent}
                   setSelectedCategoryIds={setSelectedCategoryIds}
-                  handleSubmit={handleSubmit}
                   submitting={createQuestionMutation.isPending}
-                  message={message}
                   user={user}
                   categories={categories || []}
                   showCategoryError={showCategoryError}

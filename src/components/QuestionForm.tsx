@@ -1,9 +1,11 @@
-import { Button } from '@/components/ui/button';
-import CategorySelector from './CategorySelector';
 import { SRI_LANKA_CITIES } from '@/lib/cities';
 import Image from "next/image";
 import { getCategoryColors } from "@/lib/category-colors";
 import { useState, useRef, useEffect } from 'react';
+import { Category } from '@/hooks/api/categories';
+import { UserResource } from '@clerk/types';
+
+type ClerkUser = UserResource | null | undefined;
 
 interface QuestionFormProps {
   question: string;
@@ -14,11 +16,9 @@ interface QuestionFormProps {
   setDestination: (value: string) => void;
   setIsUrgent: (value: boolean) => void;
   setSelectedCategoryIds: (value: number[]) => void;
-  handleSubmit: (e: React.FormEvent) => void;
   submitting: boolean;
-  message: string;
-  user: any;
-  categories: any[];
+  user: ClerkUser;
+  categories: Category[];
   showCategoryError: boolean;
   setShowCategoryError: (value: boolean) => void;
 }
@@ -32,9 +32,7 @@ const QuestionForm = ({
   setDestination,
   setIsUrgent,
   setSelectedCategoryIds,
-  handleSubmit,
   submitting,
-  message,
   user,
   categories,
   showCategoryError,
@@ -83,7 +81,7 @@ const QuestionForm = ({
         ) : (
           <div className="w-10 h-10 bg-[#046cb8] rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white text-sm font-medium">
-              {user?.firstName?.charAt(0) || '?'}
+              {user?.firstName?.charAt(0) || user?.lastName?.charAt(0) || user?.emailAddresses?.[0]?.emailAddress?.charAt(0).toUpperCase() || '?'}
             </span>
           </div>
         )}

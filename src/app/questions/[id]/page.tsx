@@ -171,7 +171,6 @@ const QuestionDetailPage = () => {
 
         {/* Answer Form */}
         <AnswerForm 
-          questionId={parseInt(questionId)}
           onSubmit={handleSubmitAnswer}
           submitting={submittingAnswer}
           message={message}
