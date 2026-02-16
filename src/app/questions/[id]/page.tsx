@@ -124,28 +124,27 @@ const QuestionDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation Bar - Matching Homepage */}
+      {/* Top Navigation Bar - mobile-friendly */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <button onClick={() => router.push('/')} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                <Image
-                  src="/short-logo.png"
-                  alt="Roaming Map Logo"
-                  width={32}
-                  height={32}
-                  className="rounded-lg"
-                />
-                <span className="text-xl font-semibold text-[#046cb8]">Roaming Map</span>
-              </button>
-            </div>
-            <div className="flex items-center gap-6">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16 gap-2">
+            <button onClick={() => router.push('/')} className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity min-w-0">
+              <Image
+                src="/short-logo.png"
+                alt="Roaming Map Logo"
+                width={32}
+                height={32}
+                className="rounded-lg flex-shrink-0"
+              />
+              <span className="text-lg sm:text-xl font-semibold text-[#046cb8] truncate">Roaming Map</span>
+            </button>
+            <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
               <button 
                 onClick={() => router.push('/')}
-                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors whitespace-nowrap"
               >
-                ← Back to Home
+                <span className="hidden sm:inline">← Back to Home</span>
+                <span className="sm:hidden">← Back</span>
               </button>
               <SignedIn>
                 <UserButton afterSignOutUrl="/" />
@@ -163,7 +162,7 @@ const QuestionDetailPage = () => {
       </nav>
 
       {/* Main Content - Matching Homepage Layout */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Question Card - Matching Homepage Style */}
         <div className="mb-6">
           <QuestionDetail questionId={parseInt(questionId)} />

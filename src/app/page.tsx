@@ -68,33 +68,32 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation Bar */}
+      {/* Top Navigation Bar - mobile-first, no overlap */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
+          <div className="flex justify-between items-center h-14 sm:h-16 gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <Image
                 src="/short-logo.png"
                 alt="Roaming Map Logo"
                 width={32}
                 height={32}
-                className="rounded-lg"
+                className="rounded-lg flex-shrink-0"
               />
-              <span className="text-xl font-semibold text-[#046cb8]">Roaming Map</span>
+              <span className="text-lg sm:text-xl font-semibold text-[#046cb8] truncate">Roaming Map</span>
             </div>
-            <div className="flex items-center gap-6">
-              <a href="#" className="text-gray-600 hover:text-gray-900 text-sm font-medium">How it works</a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Community</a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 text-sm font-medium">FAQ</a>
-              
-              {/* User Profile */}
+            <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
+              <a href="#" className="hidden md:inline text-gray-600 hover:text-gray-900 text-sm font-medium">How it works</a>
+              <a href="#" className="hidden md:inline text-gray-600 hover:text-gray-900 text-sm font-medium">Community</a>
+              <a href="#" className="hidden md:inline text-gray-600 hover:text-gray-900 text-sm font-medium">FAQ</a>
+
               <SignedIn>
-                  <UserButton afterSignOutUrl="/" />
+                <UserButton afterSignOutUrl="/" />
               </SignedIn>
-              
+
               <SignedOut>
                 <SignInButton mode="modal">
-                  <button className="bg-[#046cb8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#046cb8]/90 transition-colors">
+                  <button className="bg-[#046cb8] text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm font-medium hover:bg-[#046cb8]/90 transition-colors whitespace-nowrap">
                     Sign In
                   </button>
                 </SignInButton>
@@ -104,9 +103,9 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Main Content Area - Three Column Layout */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex gap-6">
+      {/* Main Content Area - single column on mobile, three on large */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="flex gap-4 sm:gap-6">
           
           {/* Left Sidebar - User Profile & Navigation */}
           <aside className="hidden lg:block w-56 flex-shrink-0">
@@ -215,7 +214,7 @@ export default function Home() {
           {/* Center - Questions Feed */}
           <main className="flex-1 min-w-0">
             {/* Ask Question Section */}
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6">
+            <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200 mb-4 sm:mb-6 overflow-hidden">
               <form onSubmit={handleSubmit}>
                 <QuestionForm
                   question={question}

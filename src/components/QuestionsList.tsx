@@ -175,38 +175,60 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
 
       return (
         <div>
-          {/* Filter Buttons and Search Bar Row */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-            <button 
-              onClick={() => {
-                setSelectedCategory('');
-                setSearchQuery('');
-                onDestinationChange?.(null);
-                onClearMyQuestions?.();
-              }}
-              className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                !selectedCategory && !searchQuery && !selectedDestination && !showMyQuestions
-                  ? 'text-gray-900 bg-[#046cb8]/10' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              All
-            </button>
-            {selectedDestination && (
-              <button
-                onClick={() => onDestinationChange?.(null)}
-                className="px-2 py-1 text-xs font-medium rounded-lg transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-100 flex items-center gap-1"
+          {/* Filter: search full-width on mobile; filters scroll */}
+          <div className="mb-4 sm:mb-6 space-y-3">
+            <div className="relative w-full sm:w-48 sm:ml-auto">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 pr-8 py-2 sm:py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-0 focus:outline-none focus:border-[#046cb8] w-full"
+              />
+              <svg className="w-4 h-4 sm:w-3 sm:h-3 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-4 h-4 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 scrollbar-hide">
+              <button 
+                onClick={() => {
+                  setSelectedCategory('');
+                  setSearchQuery('');
+                  onDestinationChange?.(null);
+                  onClearMyQuestions?.();
+                }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex-shrink-0 ${
+                  !selectedCategory && !searchQuery && !selectedDestination && !showMyQuestions
+                    ? 'text-gray-900 bg-[#046cb8]/10' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
               >
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                </svg>
-                {selectedDestination}
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
+                All
               </button>
-            )}
+              {selectedDestination && (
+                <button
+                  onClick={() => onDestinationChange?.(null)}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-100 flex items-center gap-1 flex-shrink-0"
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="truncate max-w-[80px] sm:max-w-none">{selectedDestination}</span>
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
               {categories?.map((category) => (
                 <button
                   key={category.id}
@@ -214,7 +236,7 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
                     setSelectedCategory(category.category);
                     setSearchQuery('');
                   }}
-                  className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex-shrink-0 ${
                     selectedCategory === category.category 
                       ? 'text-gray-900 bg-[#046cb8]/10' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -223,30 +245,6 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
                   {category.category}
                 </button>
               ))}
-            </div>
-            
-            <div className="relative w-48 flex-shrink-0 overflow-hidden">
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-4 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-0 focus:outline-none focus:border-gray-300 w-full min-w-0"
-                style={{ width: '100%', minWidth: 0 }}
-              />
-              <svg className="w-3 h-3 text-gray-400 absolute left-2.5 top-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-              </svg>
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              )}
             </div>
           </div>
       
@@ -281,53 +279,92 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
       ) : (
             <div className="space-y-4">
               {filteredQuestions.map((q) => (
-                <div key={q.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 relative">
-                  {/* Owner Actions - Top Right */}
-                  {isQuestionOwner(q) && (
-                    <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          router.push(`/questions/${q.id}`);
-                        }}
-                        className="p-1.5 text-gray-500 hover:text-[#046cb8] hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Edit question"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (showDeleteConfirm === q.id) {
-                            handleDeleteQuestion(q.id);
-                          } else {
-                            setShowDeleteConfirm(q.id);
-                          }
-                        }}
-                        className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete question"
-                        disabled={deleteQuestionMutation.isPending && showDeleteConfirm === q.id}
-                      >
-                        {showDeleteConfirm === q.id ? (
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        )}
-                      </button>
+                <div key={q.id} className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 relative">
+                  {/* Question Header: avatar + meta + owner actions (no overlap) */}
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-sm font-medium">
+                        {q.user?.firstName?.charAt(0) || q.user?.name?.charAt(0) || 'A'}
+                      </span>
                     </div>
-                  )}
-                  
-                  {/* Category Flags - Below Owner Actions */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                        <span className="text-gray-700 font-medium truncate">
+                          {q.user?.name || `${q.user?.firstName || 'Anonymous'} ${q.user?.lastName || ''}`.trim() || 'Anonymous'}
+                        </span>
+                        <span className="text-gray-400 flex-shrink-0">·</span>
+                        <span className="text-gray-500 text-xs sm:text-sm flex-shrink-0">{new Date(q.createdAt).toLocaleDateString()}</span>
+                        {q.destination && (
+                          <>
+                            <span className="text-gray-400 flex-shrink-0">·</span>
+                            <span className="text-gray-500 text-xs flex items-center gap-1 flex-shrink-0">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                              </svg>
+                              <span className="truncate max-w-[100px] sm:max-w-none">{q.destination}</span>
+                            </span>
+                          </>
+                        )}
+                        {q.isUrgent && (
+                          <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0">
+                            Urgent
+                          </span>
+                        )}
+                      </div>
+                      <a
+                        href={`/questions/${q.id}`}
+                        className="text-gray-900 text-base font-medium leading-snug hover:text-[#046cb8] transition-colors cursor-pointer block mt-1 break-words"
+                      >
+                        {q.question}
+                      </a>
+                    </div>
+                    {/* Owner actions - in flow, no overlap */}
+                    {isQuestionOwner(q) && (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            router.push(`/questions/${q.id}`);
+                          }}
+                          className="p-2 text-gray-500 hover:text-[#046cb8] hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit question"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (showDeleteConfirm === q.id) {
+                              handleDeleteQuestion(q.id);
+                            } else {
+                              setShowDeleteConfirm(q.id);
+                            }
+                          }}
+                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete question"
+                          disabled={deleteQuestionMutation.isPending && showDeleteConfirm === q.id}
+                        >
+                          {showDeleteConfirm === q.id ? (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Category pills - own row, no overlap with avatar */}
                   {q.questionsToCategories && q.questionsToCategories.length > 0 && (
-                    <div className={`absolute top-4 flex flex-wrap gap-1 ${isQuestionOwner(q) ? 'right-20' : 'right-4'}`}>
+                    <div className="flex flex-wrap gap-1.5 mt-3">
                       {q.questionsToCategories.map((qtc) => {
                         const colors = getCategoryColors(qtc.category?.category || '');
                         return (
@@ -341,11 +378,11 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
                       })}
                     </div>
                   )}
-                  
-                  {/* Delete Confirmation */}
+
+                  {/* Delete Confirmation - below actions */}
                   {showDeleteConfirm === q.id && (
-                    <div className="absolute top-12 right-4 bg-white border border-red-200 rounded-lg shadow-lg p-3 z-20 min-w-[200px]">
-                      <p className="text-sm text-gray-700 mb-2">Delete this question?</p>
+                    <div className="mt-3 p-3 bg-gray-50 border border-red-200 rounded-lg flex flex-col sm:flex-row sm:items-center gap-2">
+                      <p className="text-sm text-gray-700 flex-1">Delete this question?</p>
                       <div className="flex gap-2">
                         <button
                           onClick={(e) => {
@@ -353,7 +390,7 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
                             e.stopPropagation();
                             handleDeleteQuestion(q.id);
                           }}
-                          className="flex-1 px-3 py-1.5 bg-red-600 text-white text-xs rounded-md hover:bg-red-700 transition-colors"
+                          className="flex-1 sm:flex-none px-3 py-1.5 bg-red-600 text-white text-xs rounded-md hover:bg-red-700 transition-colors"
                           disabled={deleteQuestionMutation.isPending}
                         >
                           {deleteQuestionMutation.isPending ? 'Deleting...' : 'Delete'}
@@ -364,57 +401,13 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
                             e.stopPropagation();
                             setShowDeleteConfirm(null);
                           }}
-                          className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-md hover:bg-gray-200 transition-colors"
+                          className="flex-1 sm:flex-none px-3 py-1.5 bg-gray-200 text-gray-700 text-xs rounded-md hover:bg-gray-300 transition-colors"
                         >
                           Cancel
                         </button>
                       </div>
                     </div>
                   )}
-                  
-                  {/* Question Header */}
-                  <div className="flex items-start gap-4 mb-4">
-                    {/* User Avatar */}
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#046cb8] to-[#035a9e] rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-sm font-medium">
-                        {q.user?.firstName?.charAt(0) || q.user?.name?.charAt(0) || 'A'}
-                      </span>
-                    </div>
-                    
-                    {/* Question Content */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className="text-gray-500 text-sm font-medium">
-                          {q.user?.name || `${q.user?.firstName || 'Anonymous'} ${q.user?.lastName || ''}`}
-                        </span>
-                        <span className="text-gray-400">•</span>
-                        <span className="text-gray-500 text-sm">{new Date(q.createdAt).toLocaleDateString()}</span>
-                        {q.destination && (
-                          <>
-                            <span className="text-gray-400">•</span>
-                            <span className="text-gray-400 text-xs flex items-center gap-1">
-                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                              </svg>
-                              {q.destination}
-                            </span>
-                          </>
-                        )}
-                        {q.isUrgent && (
-                          <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded-full">
-                            Urgent
-                          </span>
-                        )}
-                      </div>
-                      
-                      <a 
-                        href={`/questions/${q.id}`}
-                        className="text-gray-900 text-base font-medium leading-relaxed hover:text-[#046cb8] transition-colors cursor-pointer block mb-3"
-                      >
-                        {q.question}
-                      </a>
-                    </div>
-                  </div>
               
               {/* Answer Previews */}
               {q.answers && q.answers.length > 0 && (

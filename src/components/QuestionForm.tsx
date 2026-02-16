@@ -67,9 +67,9 @@ const QuestionForm = ({
 
   return (
     <>
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2 sm:gap-3">
         {user?.imageUrl ? (
-          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
             <Image
               src={user.imageUrl}
               alt="Profile"
@@ -79,23 +79,23 @@ const QuestionForm = ({
             />
           </div>
         ) : (
-          <div className="w-10 h-10 bg-[#046cb8] rounded-full flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#046cb8] rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white text-sm font-medium">
               {user?.firstName?.charAt(0) || user?.lastName?.charAt(0) || user?.emailAddresses?.[0]?.emailAddress?.charAt(0).toUpperCase() || '?'}
             </span>
           </div>
         )}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <textarea
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Ask locals about destinations, prices, recommendations, or travel tips..."
-            className="w-full border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500 resize-none text-lg bg-blue-50/30 rounded-lg p-3"
+            className="w-full min-h-[72px] border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500 resize-none text-base sm:text-lg bg-blue-50/30 rounded-lg p-3 overflow-hidden"
             rows={3}
           />
 
           {/* Category Pills */}
-          <div className="flex flex-wrap gap-1.5 mt-3">
+          <div className="flex flex-wrap gap-1.5 mt-2 sm:mt-3">
             <div className="flex items-center gap-1 text-xs text-gray-500">
               <span>Categories</span>
               <div className="relative group">
@@ -156,31 +156,31 @@ const QuestionForm = ({
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-3">
-        <div className="flex items-center gap-4">
-          <button type="button" className="flex items-center gap-1.5 text-gray-500 hover:text-[#046cb8] transition-colors">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-gray-100 mt-3">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <button type="button" className="flex items-center gap-1.5 text-gray-500 hover:text-[#046cb8] transition-colors flex-shrink-0">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
             </svg>
-            <span className="text-sm">Photos</span>
+            <span className="text-sm whitespace-nowrap">Photos</span>
           </button>
 
           {/* Destination Dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative min-w-0" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => {
                 setIsDestinationOpen(!isDestinationOpen);
                 setSearchQuery('');
               }}
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#046cb8] transition-colors"
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#046cb8] transition-colors whitespace-nowrap"
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
               </svg>
-              <span>{destination || 'Destination'}</span>
+              <span className="truncate max-w-[120px] sm:max-w-none">{destination || 'Destination'}</span>
               <svg 
-                className={`w-3 h-3 transition-transform ${isDestinationOpen ? 'rotate-180' : ''}`} 
+                className={`w-3 h-3 flex-shrink-0 transition-transform ${isDestinationOpen ? 'rotate-180' : ''}`} 
                 fill="currentColor" 
                 viewBox="0 0 20 20"
               >
@@ -248,12 +248,12 @@ const QuestionForm = ({
           <button
             type="button"
             onClick={() => setIsUrgent(!isUrgent)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${isUrgent
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex-shrink-0 ${isUrgent
               ? 'bg-red-100 text-red-700 border border-red-200 hover:bg-red-200'
               : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
               }`}
           >
-            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${isUrgent ? 'bg-red-500' : 'bg-gray-300'
+            <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${isUrgent ? 'bg-red-500' : 'bg-gray-300'
               }`}>
               {isUrgent && (
                 <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -261,14 +261,14 @@ const QuestionForm = ({
                 </svg>
               )}
             </div>
-            <span>Urgent</span>
+            <span className="whitespace-nowrap">Urgent</span>
           </button>
         </div>
 
         <button
           type="submit"
           disabled={submitting || !question.trim() || selectedCategoryIds.length === 0}
-          className="bg-[#046cb8] text-white px-5 py-2 rounded-lg font-medium hover:bg-[#035a9e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+          className="bg-[#046cb8] text-white px-5 py-2 rounded-lg font-medium hover:bg-[#035a9e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 w-full sm:w-auto"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
