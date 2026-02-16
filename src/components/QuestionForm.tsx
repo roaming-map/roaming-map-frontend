@@ -4,6 +4,7 @@ import { getCategoryColors } from "@/lib/category-colors";
 import { useState, useRef, useEffect } from 'react';
 import { Category } from '@/hooks/api/categories';
 import { UserResource } from '@clerk/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type ClerkUser = UserResource | null | undefined;
 
@@ -19,6 +20,8 @@ interface QuestionFormProps {
   submitting: boolean;
   user: ClerkUser;
   categories: Category[];
+  /** When true, shows skeleton pills so the Categories section doesn’t shift during load */
+  categoriesLoading?: boolean;
   showCategoryError: boolean;
   setShowCategoryError: (value: boolean) => void;
 }
@@ -35,6 +38,7 @@ const QuestionForm = ({
   submitting,
   user,
   categories,
+  categoriesLoading = false,
   showCategoryError,
   setShowCategoryError
 }: QuestionFormProps) => {
@@ -95,8 +99,8 @@ const QuestionForm = ({
           />
 
           {/* Category Pills */}
-          <div className="flex flex-wrap gap-1.5 mt-2 sm:mt-3">
-            <div className="flex items-center gap-1 text-xs text-gray-500">
+          <div className="mt-2 sm:mt-3">
+            <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
               <span>Categories</span>
               <div className="relative group">
                 <svg className="w-3 h-3 text-gray-400 cursor-help" fill="currentColor" viewBox="0 0 20 20">
@@ -107,41 +111,53 @@ const QuestionForm = ({
                 </div>
               </div>
             </div>
-            {categories?.map((category) => {
-              const isSelected = selectedCategoryIds.includes(category.id);
-              const colors = getCategoryColors(category.category);
-              return (
-                <button
-                  key={category.id}
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (submitting) return;
+            <div className="flex flex-wrap gap-2 items-center">
+              {categoriesLoading ? (
+                <>
+                  <Skeleton className="h-7 w-28 rounded-full" />
+                  <Skeleton className="h-7 w-20 rounded-full" />
+                  <Skeleton className="h-7 w-24 rounded-full" />
+                  <Skeleton className="h-7 w-16 rounded-full" />
+                  <Skeleton className="h-7 w-20 rounded-full" />
+                </>
+              ) : (
+                categories?.map((category) => {
+                  const isSelected = selectedCategoryIds.includes(category.id);
+                  const colors = getCategoryColors(category.category);
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (submitting) return;
 
-                    const newSelection = isSelected
-                      ? selectedCategoryIds.filter(id => id !== category.id)
-                      : [...selectedCategoryIds, category.id];
+                        const newSelection = isSelected
+                          ? selectedCategoryIds.filter(id => id !== category.id)
+                          : [...selectedCategoryIds, category.id];
 
-                    setSelectedCategoryIds(newSelection);
-                    setShowCategoryError(false);
-                  }}
-                  disabled={submitting}
-                  className={`
-                    px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200
-                    ${isSelected
-                      ? `${colors.bgColor} ${colors.textColor} shadow-sm border-2 border-current`
-                      : `${colors.bgColor} ${colors.textColor} hover:opacity-80`
-                    }
-                    ${submitting
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'cursor-pointer'
-                    }
-                  `}
-                >
-                  {category.category}
-                </button>
-              );
-            })}
+                        setSelectedCategoryIds(newSelection);
+                        setShowCategoryError(false);
+                      }}
+                      disabled={submitting}
+                      className={`
+                        px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 whitespace-nowrap
+                        ${isSelected
+                          ? `${colors.bgColor} ${colors.textColor} shadow-sm border-2 border-current`
+                          : `${colors.bgColor} ${colors.textColor} hover:opacity-80`
+                        }
+                        ${submitting
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'cursor-pointer'
+                        }
+                      `}
+                    >
+                      {category.category}
+                    </button>
+                  );
+                })
+              )}
+            </div>
           </div>
 
           {/* Gentle category validation message */}

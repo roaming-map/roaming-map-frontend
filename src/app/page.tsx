@@ -19,7 +19,7 @@ export default function Home() {
 
   // TanStack Query hooks
   const { data: questions, isLoading } = useQuestions();
-  const { data: categories } = useCategories();
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
   const { data: stats } = useStats();
   const { data: activeUsers } = useActiveUsers();
   const { data: popularDestinations } = usePopularDestinations();
@@ -228,6 +228,7 @@ export default function Home() {
                   submitting={createQuestionMutation.isPending}
                   user={user}
                   categories={categories || []}
+                  categoriesLoading={categoriesLoading}
                   showCategoryError={showCategoryError}
                   setShowCategoryError={setShowCategoryError}
                 />

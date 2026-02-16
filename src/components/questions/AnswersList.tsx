@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { AnswersListSkeleton } from '@/components/skeletons/AnswersListSkeleton';
 
 interface Answer {
   id: number;
@@ -81,14 +82,7 @@ const AnswersList = ({ answers, loading, onAnswerUpdate }: AnswersListProps) => 
   };
 
   if (loading) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading answers...</p>
-        </div>
-      </div>
-    );
+    return <AnswersListSkeleton />;
   }
 
   console.log('📋 AnswersList rendering with:', { 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCategoryColors } from '@/lib/category-colors';
 import { useCategories, useCurrentUser, useDeleteQuestion } from '@/hooks/api';
+import { QuestionsFeedSkeleton } from '@/components/skeletons/QuestionsFeedSkeleton';
 
 interface Question {
   id: number;
@@ -163,14 +164,7 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
     return matchesSearch && matchesCategory && matchesDestination;
   });
   if (loading) {
-    return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#046cb8] mx-auto"></div>
-          <p className="mt-3 text-gray-600">Loading questions...</p>
-        </div>
-      </div>
-    );
+    return <QuestionsFeedSkeleton />;
   }
 
       return (
