@@ -5,9 +5,13 @@ import { userKeys } from './users';
 // Types based on your database schema
 export interface Question {
   id: number;
+  title: string | null;
   question: string;
   destination: string | null;
   isUrgent: boolean;
+  usefulCount?: number;
+  /** True if the current user has marked this question as useful (from API when authenticated) */
+  isUseful?: boolean;
   createdAt: string;
   createdBy: number | null;
   user?: {
@@ -25,6 +29,14 @@ export interface Question {
       id: number;
       category: string;
     };
+  }>;
+  answers?: Array<{
+    id: number;
+    content: string;
+    questionId: number;
+    createdBy: number | null;
+    createdAt: string;
+    user?: { id: number; name: string | null; firstName: string | null; lastName: string | null };
   }>;
 }
 

@@ -6,7 +6,8 @@ import { answers } from './answers';
 
 export const questions = pgTable('questions', {
   id: serial('id').primaryKey(),
-  question: text('question').notNull(),
+  title: text('title'), // Short summary for list view; null for legacy questions
+  question: text('question').notNull(), // Full details/body
   destination: text('destination'), // City or place name
   isUrgent: boolean('is_urgent').default(false),
   usefulCount: integer('useful_count').default(0), // Reaction count (like Facebook)

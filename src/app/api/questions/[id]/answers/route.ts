@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db'; 
 import { answers, users } from '@/db/schema';
-import { validateRequest, handleDatabaseError, validatePathParams } from '@/utils/validation-helpers';
+import { validateRequest, handleDatabaseError } from '@/utils/validation-helpers';
 import { createAnswerSchema, answerIdSchema } from '@/validations';
 import { auth } from '@clerk/nextjs/server';
 import { eq, desc } from 'drizzle-orm';
@@ -27,9 +27,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const questionAnswers = await db.query.answers.findMany({
       where: eq(answers.questionId, questionId),
       with: {
-        user: true, // Include user information for each answer
+        user: true,
       },
-      orderBy: (answers, { desc }) => [desc(answers.createdAt)], // Newest answers first
+      orderBy: (answers, { desc }) => [desc(answers.createdAt)],
     });
 
     return NextResponse.json(questionAnswers);
@@ -75,6 +75,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
     
     const validatedData = bodyValidation.data;
+
+    // If replying to another answer, ensure parent exists and belongs to this question
+    if (validatedData.parentId != null) {
+      const parentAnswer = await db.query.answers.findFirst({
+        where: eq(answers.id, validatedData.parentId),
+      });
+      if (!parentAnswer || parentAnswer.questionId !== questionId) {
+        return NextResponse.json(
+          { error: 'Parent answer not found or does not belong to this question' },
+          { status: 400 }
+        );
+      }
+    }
 
     // Find or create user in our database
     let user = await db.query.users.findFirst({
@@ -146,6 +159,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const newAnswer = await db.insert(answers).values({
       content: validatedData.content,
       questionId: questionId,
+      parentId: validatedData.parentId ?? null,
       createdBy: user.id,
     }).returning();
 

@@ -134,6 +134,7 @@ export async function POST(req: Request) {
     // Create the question with validated data
     try {
       const newQuestion = await db.insert(questions).values({
+        title: validatedData.title,
         question: validatedData.question,
         destination: validatedData.destination,
         isUrgent: validatedData.isUrgent,
@@ -143,18 +144,13 @@ export async function POST(req: Request) {
       // Handle category relationships if categoryIds are provided
       if (validatedData.categoryIds && validatedData.categoryIds.length > 0) {
         try {
-          console.log('Inserting categories:', validatedData.categoryIds);
-          const categoryRelations = validatedData.categoryIds.map(categoryId => ({
+          const categoryRelations = validatedData.categoryIds.map((categoryId) => ({
             questionId: newQuestion[0].id,
-            categoryId: categoryId,
+            categoryId,
           }));
-
-          console.log('Category relations:', categoryRelations);
           await db.insert(questionsToCategories).values(categoryRelations);
-          console.log('Categories inserted successfully');
         } catch (categoryError) {
           console.error('Error inserting categories:', categoryError);
-          // Don't fail the entire request if categories fail
         }
       }
 

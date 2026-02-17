@@ -1,13 +1,17 @@
 'use client';
 
 import { SignedIn, SignedOut, UserButton, useUser, SignInButton } from '@clerk/nextjs';
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePathname, useSearchParams } from 'next/navigation';
 import Image from "next/image";
 import QuestionForm from '@/components/QuestionForm';
 import QuestionsList from '@/components/QuestionsList';
 import { useQuestions, useCreateQuestion, useCategories, useStats, useActiveUsers, usePopularDestinations, useCurrentUser } from "@/hooks/api";
 
+const SCROLL_POSITION_KEY = 'questionsScrollPosition';
+
 export default function Home() {
+  const [title, setTitle] = useState('');
   const [question, setQuestion] = useState('');
   const [destination, setDestination] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
@@ -26,6 +30,61 @@ export default function Home() {
   const createQuestionMutation = useCreateQuestion();
   const { user } = useUser();
   const { data: currentUser } = useCurrentUser();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Sync "My Questions" filter with URL ?my=questions (e.g. from bottom nav Questions tab)
+  useEffect(() => {
+    const myQuestions = searchParams.get('my') === 'questions';
+    setShowMyQuestions(myQuestions);
+  }, [searchParams]);
+
+  // Restore scroll position when returning from a question detail page (after content has loaded)
+  useEffect(() => {
+    if (pathname !== '/') return;
+    const saved = sessionStorage.getItem(SCROLL_POSITION_KEY);
+    if (saved == null) return;
+    const y = parseInt(saved, 10);
+    if (Number.isNaN(y)) {
+      sessionStorage.removeItem(SCROLL_POSITION_KEY);
+      return;
+    }
+    // Wait for feed to finish loading so page height is correct, then restore
+    const restore = () => {
+      sessionStorage.removeItem(SCROLL_POSITION_KEY);
+      window.scrollTo({ top: y, behavior: 'instant' });
+    };
+    if (!isLoading) {
+      // Content ready: run after paint so we don't get overridden by framework scroll
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => restore());
+      });
+    } else {
+      // Will re-run when isLoading becomes false
+    }
+  }, [pathname, isLoading]);
+
+  // Prevent browser from scrolling to top on back (so our restore sticks)
+  useEffect(() => {
+    if (pathname !== '/' || typeof window === 'undefined') return;
+    const prev = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
+    return () => { window.history.scrollRestoration = prev; };
+  }, [pathname]);
+
+  // Scroll to Ask form when opening /#ask (e.g. from bottom nav FAB)
+  useEffect(() => {
+    if (pathname !== '/' || typeof window === 'undefined') return;
+    const scrollToAsk = () => {
+      if (window.location.hash === '#ask') {
+        const el = document.getElementById('ask');
+        if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      }
+    };
+    scrollToAsk();
+    window.addEventListener('hashchange', scrollToAsk);
+    return () => window.removeEventListener('hashchange', scrollToAsk);
+  }, [pathname]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +99,7 @@ export default function Home() {
 
     try {
       await createQuestionMutation.mutateAsync({
+        title,
         question,
         destination,
         isUrgent,
@@ -47,6 +107,7 @@ export default function Home() {
       });
       
       setMessage('✅ Question submitted successfully!');
+      setTitle('');
       setQuestion('');
       setDestination('');
       setIsUrgent(false);
@@ -68,8 +129,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation Bar - mobile-first, no overlap */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      {/* Top Header - light grey bar, match reference */}
+      <nav className="bg-gray-100 border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16 gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -103,7 +164,7 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Main Content Area - single column on mobile, three on large */}
+      {/* Main Content - match reference spacing and openness */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <div className="flex gap-4 sm:gap-6">
           
@@ -167,8 +228,12 @@ export default function Home() {
                       </button>
                   <button 
                     onClick={() => {
-                      setShowMyQuestions(!showMyQuestions);
-                      setSelectedDestination(null); // Clear destination filter when toggling
+                      const next = !showMyQuestions;
+                      setShowMyQuestions(next);
+                      setSelectedDestination(null);
+                      // Update URL so bottom nav Questions tab reflects state
+                      const url = next ? '/?my=questions' : '/';
+                      window.history.replaceState(null, '', url);
                     }}
                     className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg font-medium transition-colors ${
                       showMyQuestions
@@ -213,14 +278,16 @@ export default function Home() {
 
           {/* Center - Questions Feed */}
           <main className="flex-1 min-w-0">
-            {/* Ask Question Section */}
-            <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200 mb-4 sm:mb-6 overflow-hidden">
+            {/* Ask Question card - generous padding, subtle shadow */}
+            <div id="ask" className="bg-white rounded-2xl p-4 sm:p-5 shadow-md border border-gray-100 mb-5 overflow-visible">
               <form onSubmit={handleSubmit}>
                 <QuestionForm
+                  title={title}
                   question={question}
                   destination={destination}
                   isUrgent={isUrgent}
                   selectedCategoryIds={selectedCategoryIds}
+                  setTitle={setTitle}
                   setQuestion={setQuestion}
                   setDestination={setDestination}
                   setIsUrgent={setIsUrgent}
@@ -253,7 +320,10 @@ export default function Home() {
                 onDestinationChange={setSelectedDestination}
                 showMyQuestions={showMyQuestions}
                 currentUserId={currentUser?.id}
-                onClearMyQuestions={() => setShowMyQuestions(false)}
+                onClearMyQuestions={() => {
+                  setShowMyQuestions(false);
+                  window.history.replaceState(null, '', '/');
+                }}
               />
             </div>
       </main>
@@ -472,6 +542,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
     </div>
   );
 }

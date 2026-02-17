@@ -9,13 +9,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 export function QuestionsFeedSkeleton() {
   return (
     <div>
-      {/* Filter row - matches QuestionsList filter layout */}
+      {/* Filter row - matches QuestionsList (search card + filter pills) */}
       <div className="mb-4 sm:mb-6 space-y-3">
-        <div className="relative w-full sm:w-48 sm:ml-auto">
-          <Skeleton className="h-9 sm:h-8 w-full rounded-lg" />
+        <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
+          <Skeleton className="h-10 w-full rounded-lg" />
         </div>
         <div className="flex items-center gap-2 overflow-hidden">
-          <Skeleton className="h-7 w-10 rounded-lg" />
+          <Skeleton className="h-7 w-10 rounded-full" />
           <Skeleton className="h-7 w-20 rounded-lg" />
           <Skeleton className="h-7 w-24 rounded-lg" />
           <Skeleton className="h-7 w-20 rounded-lg" />
@@ -28,7 +28,7 @@ export function QuestionsFeedSkeleton() {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-200"
+            className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100"
           >
             <div className="flex items-start gap-3 sm:gap-4">
               <Skeleton className="h-10 w-10 sm:h-12 sm:w-12 rounded-full flex-shrink-0" />
