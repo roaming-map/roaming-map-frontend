@@ -1,16 +1,17 @@
 'use client';
 
 import { SignedIn, SignedOut, UserButton, useUser, SignInButton } from '@clerk/nextjs';
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { usePathname, useSearchParams } from 'next/navigation';
 import Image from "next/image";
 import QuestionForm from '@/components/QuestionForm';
 import QuestionsList from '@/components/QuestionsList';
+import { QuestionAnswerSheet } from '@/components/questions/QuestionAnswerSheet';
 import { useQuestions, useCreateQuestion, useCategories, useStats, useActiveUsers, usePopularDestinations, useCurrentUser } from "@/hooks/api";
 
 const SCROLL_POSITION_KEY = 'questionsScrollPosition';
 
-export default function Home() {
+function HomeContent() {
   const [title, setTitle] = useState('');
   const [question, setQuestion] = useState('');
   const [destination, setDestination] = useState('');
@@ -22,6 +23,8 @@ export default function Home() {
   const [showMyQuestions, setShowMyQuestions] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
+  const [isAskComposerOpen, setIsAskComposerOpen] = useState(false);
 
   // TanStack Query hooks
   const { data: questions, isLoading } = useQuestions();
@@ -34,6 +37,14 @@ export default function Home() {
   const { data: currentUser } = useCurrentUser();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const hasAskDraft = Boolean(
+    title.trim() ||
+    question.trim() ||
+    destination ||
+    isUrgent ||
+    selectedCategoryIds.length > 0
+  );
+  const showFullAskComposer = isAskComposerOpen || hasAskDraft;
 
   // Sync "My Questions" filter with URL ?my=questions (e.g. from bottom nav Questions tab)
   useEffect(() => {
@@ -79,6 +90,7 @@ export default function Home() {
     if (pathname !== '/' || typeof window === 'undefined') return;
     const scrollToAsk = () => {
       if (window.location.hash === '#ask') {
+        setIsAskComposerOpen(true);
         const el = document.getElementById('ask');
         if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }));
       }
@@ -114,6 +126,7 @@ export default function Home() {
       setDestination('');
       setIsUrgent(false);
       setSelectedCategoryIds([]);
+      setIsAskComposerOpen(false);
       
       // Auto-dismiss success message after 3 seconds
       setTimeout(() => {
@@ -291,29 +304,59 @@ export default function Home() {
 
           {/* Center - Questions Feed */}
           <main className="flex-1 min-w-0">
-            {/* Ask Question card - generous padding, subtle shadow */}
-            <div id="ask" className="bg-white rounded-2xl p-4 sm:p-5 shadow-md border border-gray-100 mb-5 overflow-visible">
-              <form onSubmit={handleSubmit}>
-                <QuestionForm
-                  title={title}
-                  question={question}
-                  destination={destination}
-                  isUrgent={isUrgent}
-                  selectedCategoryIds={selectedCategoryIds}
-                  setTitle={setTitle}
-                  setQuestion={setQuestion}
-                  setDestination={setDestination}
-                  setIsUrgent={setIsUrgent}
-                  setSelectedCategoryIds={setSelectedCategoryIds}
-                  submitting={createQuestionMutation.isPending}
-                  user={user}
-                  userLoading={!isUserLoaded}
-                  categories={categories || []}
-                  categoriesLoading={categoriesLoading}
-                  showCategoryError={showCategoryError}
-                  setShowCategoryError={setShowCategoryError}
-                />
-              </form>
+            {/* Ask Question card - compact until the user is ready to write */}
+            <div id="ask" className={`bg-white rounded-xl shadow-sm border border-gray-100 mb-4 overflow-visible ${showFullAskComposer ? 'p-3 sm:p-5' : 'p-2.5'}`}>
+              {showFullAskComposer ? (
+                <form onSubmit={handleSubmit}>
+                  <QuestionForm
+                    title={title}
+                    question={question}
+                    destination={destination}
+                    isUrgent={isUrgent}
+                    selectedCategoryIds={selectedCategoryIds}
+                    setTitle={setTitle}
+                    setQuestion={setQuestion}
+                    setDestination={setDestination}
+                    setIsUrgent={setIsUrgent}
+                    setSelectedCategoryIds={setSelectedCategoryIds}
+                    submitting={createQuestionMutation.isPending}
+                    user={user}
+                    userLoading={!isUserLoaded}
+                    categories={categories || []}
+                    categoriesLoading={categoriesLoading}
+                    showCategoryError={showCategoryError}
+                    setShowCategoryError={setShowCategoryError}
+                  />
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsAskComposerOpen(true)}
+                  className="flex w-full items-center gap-3 rounded-lg bg-gray-50 px-3 py-2.5 text-left transition-colors hover:bg-gray-100"
+                >
+                  {user?.imageUrl ? (
+                    <Image
+                      src={user.imageUrl}
+                      alt=""
+                      width={36}
+                      height={36}
+                      className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#046cb8] text-sm font-semibold text-white">
+                      {user?.firstName?.charAt(0) || 'U'}
+                    </span>
+                  )}
+                  <span className="min-w-0 flex-1 text-sm text-gray-500">
+                    Ask about prices, routes, food, or places...
+                  </span>
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#046cb8] text-white">
+                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                </button>
+              )}
 
               {message && (
                 <div className={`mt-3 p-3 rounded-lg text-sm ${message.includes('Error')
@@ -326,14 +369,14 @@ export default function Home() {
             </div>
 
             {/* Sticky search + filter: only sticks after you scroll past the Ask box */}
-            <div className="sticky top-14 sm:top-16 z-10 bg-white rounded-2xl shadow-md border border-gray-100 py-3 px-3 sm:px-4 space-y-3 mb-4 sm:mb-6">
+            <div className="sticky top-14 sm:top-16 z-10 bg-white rounded-xl shadow-sm border border-gray-100 py-2.5 px-2.5 sm:px-4 space-y-2.5 mb-4 sm:mb-6">
               <div className="relative w-full">
                 <input
                   type="text"
                   placeholder="Search destinations, locals..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 bg-gray-100 border-0 rounded-xl text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#046cb8]/20 focus:outline-none"
+                  className="w-full pl-10 pr-10 py-2.5 bg-gray-100 border-0 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#046cb8]/20 focus:outline-none"
                 />
                 <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
@@ -354,7 +397,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className={`px-4 py-2 text-sm font-medium rounded-full transition-colors flex-shrink-0 ${
+                  className={`px-3.5 py-1.5 text-sm font-medium rounded-full transition-colors flex-shrink-0 ${
                     !selectedCategory && !searchQuery && !selectedDestination && !showMyQuestions
                       ? 'text-white bg-[#046cb8]'
                       : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
@@ -366,7 +409,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => setSelectedDestination(null)}
-                    className="px-4 py-2 text-sm font-medium rounded-full flex items-center gap-1 flex-shrink-0 bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                    className="px-3.5 py-1.5 text-sm font-medium rounded-full flex items-center gap-1 flex-shrink-0 bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
                   >
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
@@ -385,7 +428,7 @@ export default function Home() {
                       setSelectedCategory(category.category);
                       setSearchQuery('');
                     }}
-                    className={`px-4 py-2 text-sm font-medium rounded-full transition-colors flex-shrink-0 ${
+                    className={`px-3.5 py-1.5 text-sm font-medium rounded-full transition-colors flex-shrink-0 ${
                       selectedCategory === category.category
                         ? 'text-white bg-[#046cb8]'
                         : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
@@ -414,6 +457,7 @@ export default function Home() {
                 setSearchQuery={setSearchQuery}
                 selectedCategory={selectedCategory}
                 setSelectedCategory={setSelectedCategory}
+                onQuestionSelect={setSelectedQuestionId}
               />
             </div>
       </main>
@@ -633,6 +677,18 @@ export default function Home() {
         </div>
       </footer>
 
+      <QuestionAnswerSheet
+        questionId={selectedQuestionId}
+        onClose={() => setSelectedQuestionId(null)}
+      />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+      <HomeContent />
+    </Suspense>
   );
 }

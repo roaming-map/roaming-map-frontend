@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
 import { TanStackQueryProvider } from '@/providers';
@@ -35,7 +36,9 @@ export default function RootLayout({
             <div className="min-h-screen pb-16 md:pb-0">
               {children}
             </div>
-            <BottomNav />
+            <Suspense fallback={null}>
+              <BottomNav />
+            </Suspense>
           </TanStackQueryProvider>
         </body>
       </html>

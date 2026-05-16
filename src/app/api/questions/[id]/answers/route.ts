@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db/db'; 
 import { answers, users } from '@/db/schema';
 import { validateRequest, handleDatabaseError } from '@/utils/validation-helpers';
-import { createAnswerSchema, answerIdSchema } from '@/validations';
+import { createAnswerSchema } from '@/validations';
 import { auth } from '@clerk/nextjs/server';
-import { eq, desc } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 // GET /api/questions/[id]/answers - Get all answers for a specific question
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -156,7 +156,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     // Create the answer with validated data
-    const newAnswer = await db.insert(answers).values({
+    const [newAnswer] = await db.insert(answers).values({
       content: validatedData.content,
       questionId: questionId,
       parentId: validatedData.parentId ?? null,
@@ -165,7 +165,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     // Fetch the complete answer with user information
     const completeAnswer = await db.query.answers.findFirst({
-      where: eq(answers.id, newAnswer[0].id),
+      where: eq(answers.id, newAnswer.id),
       with: {
         user: true,
       },

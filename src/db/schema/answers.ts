@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, timestamp, integer } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, boolean, timestamp, integer, type AnyPgColumn } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { questions } from './questions';
 import { users } from './users';
@@ -7,7 +7,7 @@ export const answers = pgTable('answers', {
   id: serial('id').primaryKey(),
   content: text('content').notNull(),
   questionId: integer('question_id').notNull().references(() => questions.id, { onDelete: 'cascade' }),
-  parentId: integer('parent_id').references(() => answers.id, { onDelete: 'cascade' }),
+  parentId: integer('parent_id').references((): AnyPgColumn => answers.id, { onDelete: 'cascade' }),
   createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

@@ -10,9 +10,10 @@ interface AnswersListProps {
   loading: boolean;
   onAnswerUpdate?: () => void;
   onReply?: (answerId: number, name: string) => void;
+  surface?: 'page' | 'sheet';
 }
 
-const AnswersList = ({ answers, loading, onAnswerUpdate, onReply }: AnswersListProps) => {
+const AnswersList = ({ answers, loading, onAnswerUpdate, onReply, surface = 'page' }: AnswersListProps) => {
   const { data: currentUser } = useCurrentUser();
   const [votingAnswerId, setVotingAnswerId] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<'helpful' | 'newest'>('helpful');
@@ -141,17 +142,20 @@ const AnswersList = ({ answers, loading, onAnswerUpdate, onReply }: AnswersListP
         </>
       );
     };
+    const cardClassName = surface === 'sheet'
+      ? `rounded-xl border border-gray-200 bg-white p-3 shadow-sm ${
+          isReply ? 'border-l-[3px] border-l-[#046cb8] bg-gray-50' : ''
+        } ${isDeleting ? 'opacity-60 pointer-events-none' : ''}`
+      : `rounded-2xl p-4 sm:p-5 ${
+          isReply
+            ? 'bg-gray-50 border border-gray-200 shadow-sm border-l-[3px] border-l-[#046cb8]'
+            : 'bg-white shadow-md border border-gray-100'
+        } ${isDeleting ? 'opacity-60 pointer-events-none' : ''}`;
 
     return (
       <div key={answer.id} className={isReply ? 'ml-8 sm:ml-12 mt-3' : ''}>
-        <div
-          className={`rounded-2xl p-4 sm:p-5 ${
-            isReply
-              ? 'bg-gray-50 border border-gray-200 shadow-sm border-l-[3px] border-l-[#046cb8]'
-              : 'bg-white shadow-md border border-gray-100'
-          } ${isDeleting ? 'opacity-60 pointer-events-none' : ''}`}
-        >
-          <div className="flex items-center gap-2.5 mb-3">
+        <div className={cardClassName}>
+          <div className="flex items-center gap-2.5 mb-2.5">
             <div className={`${isReply ? 'w-7 h-7 sm:w-8 sm:h-8' : 'w-8 h-8 sm:w-9 sm:h-9'} bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0`}>
               <span className="text-white text-[10px] sm:text-xs font-medium">{initial}</span>
             </div>
@@ -218,7 +222,7 @@ const AnswersList = ({ answers, loading, onAnswerUpdate, onReply }: AnswersListP
               </div>
             </div>
           ) : (
-            <p className={`text-gray-800 leading-relaxed mb-4 ${isReply ? 'text-sm' : 'text-sm sm:text-base'}`}>
+            <p className={`text-gray-800 leading-relaxed mb-3 ${isReply ? 'text-sm' : 'text-sm sm:text-base'}`}>
               {renderContent()}
             </p>
           )}
@@ -286,7 +290,7 @@ const AnswersList = ({ answers, loading, onAnswerUpdate, onReply }: AnswersListP
       </div>
 
       {answers.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8 text-center text-gray-500">
+        <div className={`${surface === 'sheet' ? 'rounded-xl border-dashed shadow-none p-6' : 'rounded-2xl shadow-md p-8'} bg-white border border-gray-100 text-center text-gray-500`}>
           <svg className="w-10 h-10 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>

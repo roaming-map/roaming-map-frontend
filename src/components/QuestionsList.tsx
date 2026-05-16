@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { getCategoryColors } from '@/lib/category-colors';
 import { useCategories, useCurrentUser, useDeleteQuestion } from '@/hooks/api';
 import { QuestionsFeedSkeleton } from '@/components/skeletons/QuestionsFeedSkeleton';
@@ -33,7 +32,7 @@ interface Question {
     user?: {
       id: number;
       name: string | null;
-      email: string;
+      email?: string;
       firstName: string | null;
       lastName: string | null;
     };
@@ -61,6 +60,7 @@ interface QuestionsListProps {
   setSearchQuery?: (value: string) => void;
   selectedCategory?: string;
   setSelectedCategory?: (value: string) => void;
+  onQuestionSelect?: (questionId: number) => void;
 }
 
 const QuestionsList = ({
@@ -75,9 +75,9 @@ const QuestionsList = ({
   setSearchQuery: setSearchQueryProp,
   selectedCategory: selectedCategoryProp,
   setSelectedCategory: setSelectedCategoryProp,
+  onQuestionSelect,
 }: QuestionsListProps) => {
   const router = useRouter();
-  const [expandedAnswers, setExpandedAnswers] = useState<Set<number>>(new Set());
   const [internalSearch, setInternalSearch] = useState<string>('');
   const [internalCategory, setInternalCategory] = useState<string>('');
   const [reactingQuestionId, setReactingQuestionId] = useState<number | null>(null);
@@ -141,14 +141,15 @@ const QuestionsList = ({
     }
   };
 
-  const toggleAnswers = (questionId: number) => {
-    const newExpanded = new Set(expandedAnswers);
-    if (newExpanded.has(questionId)) {
-      newExpanded.delete(questionId);
-    } else {
-      newExpanded.add(questionId);
+  const openQuestion = (questionId: number) => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('questionsScrollPosition', String(window.scrollY));
     }
-    setExpandedAnswers(newExpanded);
+    if (onQuestionSelect) {
+      onQuestionSelect(questionId);
+      return;
+    }
+    router.push(`/questions/${questionId}`);
   };
 
   const handleDeleteQuestion = async (questionId: number) => {
@@ -198,7 +199,7 @@ const QuestionsList = ({
           {/* Search + filter bar only when not controlled by parent (e.g. unified sticky header) */}
           {!isControlled && (
             <div className="sticky top-14 sm:top-16 z-10 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm mb-4 sm:mb-6 py-3 space-y-3 overflow-visible">
-              <div className="bg-white rounded-2xl p-3.5 shadow-md border border-gray-100">
+              <div className="bg-white rounded-xl p-2.5 shadow-sm border border-gray-100">
                 <div className="relative w-full">
                   <input
                     type="text"
@@ -320,17 +321,17 @@ const QuestionsList = ({
       ) : (
             <div className="space-y-6">
               {filteredQuestions.map((q) => (
-                <div key={q.id} className="bg-white rounded-2xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow relative overflow-hidden">
+                <div key={q.id} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:border-gray-300 transition-colors relative overflow-hidden">
                   {/* Urgent header strip - red, subtle, full-width */}
                   {q.isUrgent && (
-                    <div className="bg-red-50 border-b border-red-100 px-4 py-2 sm:px-6 flex items-center gap-2 rounded-t-2xl">
+                    <div className="bg-red-50 border-b border-red-100 px-4 py-2 sm:px-6 flex items-center gap-2 rounded-t-xl">
                       <svg className="w-3.5 h-3.5 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                       <span className="text-red-700 text-[10px] sm:text-xs font-semibold uppercase tracking-wide">Urgent</span>
                     </div>
                   )}
-                  <div className="px-4 py-5 sm:p-6">
+                  <div className="px-4 py-4 sm:p-5">
                   {/* Category pills - top of card */}
                   {q.questionsToCategories && q.questionsToCategories.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-3">
@@ -420,10 +421,10 @@ const QuestionsList = ({
                   </div>
 
                   {/* Question title + details - same left edge as category pills and username */}
-                  <Link
-                    href={`/questions/${q.id}`}
-                    className="block mt-2"
-                    onClick={() => sessionStorage.setItem('questionsScrollPosition', String(window.scrollY))}
+                  <button
+                    type="button"
+                    className="block mt-2 w-full text-left"
+                    onClick={() => openQuestion(q.id)}
                   >
                     {q.title != null && q.title !== '' ? (
                       <>
@@ -439,7 +440,7 @@ const QuestionsList = ({
                         {q.question}
                       </p>
                     )}
-                  </Link>
+                  </button>
 
                   {/* Delete Confirmation - below actions */}
                   {showDeleteConfirm === q.id && (
@@ -472,86 +473,31 @@ const QuestionsList = ({
                   )}
 
               {/* Answers / liking block - single row, no duplicate "X answers" */}
-              <div className="mt-5 -mx-4 -mb-4 px-4 pt-4 pb-5 sm:-mx-6 sm:-mb-6 sm:px-6 sm:pt-5 sm:pb-6 bg-gray-50/80 rounded-b-2xl">
-                {/* Answer Previews - collapse/expand via footer button when there are answers */}
-                {q.answers && q.answers.length > 0 && expandedAnswers.has(q.id) && (
-                  <div className="mb-4 space-y-3">
-
-                    <div className="space-y-3">
-                        {q.answers.slice(0, 2).map((answer) => (
-                          <div key={answer.id} className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
-                            <div className="flex items-start gap-3">
-                              <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                <span className="text-white text-xs font-medium">
-                                  {answer.user?.firstName?.charAt(0) || answer.user?.name?.charAt(0) || 'L'}
-                                </span>
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs font-medium text-gray-700">
-                                    {answer.user?.name || `${answer.user?.firstName || 'Local'} ${answer.user?.lastName || ''}`}
-                                  </span>
-                                  <span className="text-xs text-gray-500">•</span>
-                                  <span className="text-xs text-gray-500">
-                                    {new Date(answer.createdAt).toLocaleDateString()}
-                                  </span>
-                                </div>
-                                <p className="text-xs sm:text-sm text-gray-600">
-                                  {answer.content.length > 120 
-                                    ? `${answer.content.substring(0, 120)}...` 
-                                    : answer.content
-                                  }
-                                </p>
-                                {answer.content.length > 120 && (
-                                  <a 
-                                    href={`/questions/${q.id}`}
-                                    className="text-xs text-[#046cb8] hover:text-[#035a9e] font-medium mt-1 inline-block"
-                                  >
-                                    Read more
-                                  </a>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-
-                        {q.answers.length > 2 && (
-                          <div className="text-center">
-                            <a 
-                              href={`/questions/${q.id}`}
-                                  className="text-xs text-[#046cb8] hover:text-[#035a9e] font-medium"
-                            >
-                              View {q.answers.length - 2} more answer{q.answers.length - 2 !== 1 ? 's' : ''}
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                  </div>
-                )}
-
-                {/* Question Footer - single row: answers (expand when >0) + useful */}
+              <div className="mt-4 -mx-4 -mb-4 px-4 pt-3 pb-4 sm:-mx-5 sm:-mb-5 sm:px-5 sm:pt-4 sm:pb-5 bg-gray-50/70 rounded-b-xl">
+                {/* Question Footer - single row: answers + useful */}
                 <div className="flex items-center justify-between min-h-[44px]">
                   <div className="flex items-center gap-2 sm:gap-4 py-1">
                     {q.answers && q.answers.length > 0 ? (
                       <button
-                        onClick={() => toggleAnswers(q.id)}
+                        onClick={() => openQuestion(q.id)}
                         className="flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-600 hover:text-[#046cb8] transition-colors cursor-pointer"
                       >
                         <svg className="w-4 h-4 text-[#046cb8]" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
                         </svg>
                         {q.answers.length} Answer{q.answers.length !== 1 ? 's' : ''}
-                        <svg className={`w-4 h-4 transition-transform ${expandedAnswers.has(q.id) ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
                       </button>
                     ) : (
-                      <a href={`/questions/${q.id}`} className="flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-600 hover:text-[#046cb8] transition-colors">
+                      <button
+                        type="button"
+                        onClick={() => openQuestion(q.id)}
+                        className="flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-600 hover:text-[#046cb8] transition-colors"
+                      >
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
                         </svg>
                         0 answers
-                      </a>
+                      </button>
                     )}
                   </div>
 
