@@ -20,6 +20,8 @@ export default function Home() {
   const [showCategoryError, setShowCategoryError] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
   const [showMyQuestions, setShowMyQuestions] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
 
   // TanStack Query hooks
   const { data: questions, isLoading } = useQuestions();
@@ -28,7 +30,7 @@ export default function Home() {
   const { data: activeUsers } = useActiveUsers();
   const { data: popularDestinations } = usePopularDestinations();
   const createQuestionMutation = useCreateQuestion();
-  const { user } = useUser();
+  const { user, isLoaded: isUserLoaded } = useUser();
   const { data: currentUser } = useCurrentUser();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -127,10 +129,18 @@ export default function Home() {
     }
   };
 
+  const clearFilters = () => {
+    setSelectedCategory('');
+    setSearchQuery('');
+    setSelectedDestination(null);
+    setShowMyQuestions(false);
+    window.history.replaceState(null, '', '/');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Header - light grey bar, match reference */}
-      <nav className="bg-gray-100 border-b border-gray-200 sticky top-0 z-50">
+      {/* Top nav only – stays sticky; search + pills come after Ask box and stick when you scroll past it */}
+      <nav className="sticky top-0 z-50 bg-gray-100 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16 gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -147,11 +157,14 @@ export default function Home() {
               <a href="#" className="hidden md:inline text-gray-600 hover:text-gray-900 text-sm font-medium">How it works</a>
               <a href="#" className="hidden md:inline text-gray-600 hover:text-gray-900 text-sm font-medium">Community</a>
               <a href="#" className="hidden md:inline text-gray-600 hover:text-gray-900 text-sm font-medium">FAQ</a>
-
+              <button type="button" className="p-2 text-gray-500 hover:text-gray-700 rounded-lg" aria-label="Notifications">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                </svg>
+              </button>
               <SignedIn>
                 <UserButton afterSignOutUrl="/" />
               </SignedIn>
-
               <SignedOut>
                 <SignInButton mode="modal">
                   <button className="bg-[#046cb8] text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm font-medium hover:bg-[#046cb8]/90 transition-colors whitespace-nowrap">
@@ -294,6 +307,7 @@ export default function Home() {
                   setSelectedCategoryIds={setSelectedCategoryIds}
                   submitting={createQuestionMutation.isPending}
                   user={user}
+                  userLoading={!isUserLoaded}
                   categories={categories || []}
                   categoriesLoading={categoriesLoading}
                   showCategoryError={showCategoryError}
@@ -311,6 +325,78 @@ export default function Home() {
               )}
             </div>
 
+            {/* Sticky search + filter: only sticks after you scroll past the Ask box */}
+            <div className="sticky top-14 sm:top-16 z-10 bg-white rounded-2xl shadow-md border border-gray-100 py-3 px-3 sm:px-4 space-y-3 mb-4 sm:mb-6">
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  placeholder="Search destinations, locals..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2.5 bg-gray-100 border-0 rounded-xl text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#046cb8]/20 focus:outline-none"
+                />
+                <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                </svg>
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-hide pr-1">
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className={`px-4 py-2 text-sm font-medium rounded-full transition-colors flex-shrink-0 ${
+                    !selectedCategory && !searchQuery && !selectedDestination && !showMyQuestions
+                      ? 'text-white bg-[#046cb8]'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  All
+                </button>
+                {selectedDestination && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDestination(null)}
+                    className="px-4 py-2 text-sm font-medium rounded-full flex items-center gap-1 flex-shrink-0 bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <span className="truncate max-w-[80px] sm:max-w-none">{selectedDestination}</span>
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                )}
+                {(categories || []).map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategory(category.category);
+                      setSearchQuery('');
+                    }}
+                    className={`px-4 py-2 text-sm font-medium rounded-full transition-colors flex-shrink-0 ${
+                      selectedCategory === category.category
+                        ? 'text-white bg-[#046cb8]'
+                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    {category.category}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Questions Feed */}
             <div className="space-y-4">
               <QuestionsList 
@@ -324,6 +410,10 @@ export default function Home() {
                   setShowMyQuestions(false);
                   window.history.replaceState(null, '', '/');
                 }}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
               />
             </div>
       </main>

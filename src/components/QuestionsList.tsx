@@ -56,14 +56,37 @@ interface QuestionsListProps {
   showMyQuestions?: boolean;
   currentUserId?: number;
   onClearMyQuestions?: () => void;
+  /** When provided, filter is controlled by parent (e.g. unified sticky header); search/filter bar is not rendered here */
+  searchQuery?: string;
+  setSearchQuery?: (value: string) => void;
+  selectedCategory?: string;
+  setSelectedCategory?: (value: string) => void;
 }
 
-const QuestionsList = ({ questions, loading, selectedDestination, onDestinationChange, showMyQuestions, currentUserId, onClearMyQuestions }: QuestionsListProps) => {
+const QuestionsList = ({
+  questions,
+  loading,
+  selectedDestination,
+  onDestinationChange,
+  showMyQuestions,
+  currentUserId,
+  onClearMyQuestions,
+  searchQuery: searchQueryProp,
+  setSearchQuery: setSearchQueryProp,
+  selectedCategory: selectedCategoryProp,
+  setSelectedCategory: setSelectedCategoryProp,
+}: QuestionsListProps) => {
   const router = useRouter();
   const [expandedAnswers, setExpandedAnswers] = useState<Set<number>>(new Set());
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [internalSearch, setInternalSearch] = useState<string>('');
+  const [internalCategory, setInternalCategory] = useState<string>('');
   const [reactingQuestionId, setReactingQuestionId] = useState<number | null>(null);
+
+  const isControlled = setSearchQueryProp !== undefined;
+  const searchQuery = isControlled ? (searchQueryProp ?? '') : internalSearch;
+  const setSearchQuery = isControlled ? setSearchQueryProp! : setInternalSearch;
+  const selectedCategory = isControlled ? (selectedCategoryProp ?? '') : internalCategory;
+  const setSelectedCategory = isControlled ? setSelectedCategoryProp! : setInternalCategory;
   const [questionUsefulCounts, setQuestionUsefulCounts] = useState<Record<number, number>>({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
@@ -172,100 +195,119 @@ const QuestionsList = ({ questions, loading, selectedDestination, onDestinationC
 
       return (
         <div>
-          {/* Sticky search + filter bar: sticks below main nav on scroll */}
-          <div className="sticky top-14 sm:top-16 z-10 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm mb-4 sm:mb-6 py-3 space-y-3 overflow-visible">
-            <div className="bg-white rounded-2xl p-3.5 shadow-md border border-gray-100">
-              <div className="relative w-full">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-9 py-2.5 sm:py-2 bg-gray-50 border-0 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-[#046cb8]/20 focus:ring-offset-0 w-full"
-                />
-                <svg className="w-5 h-5 sm:w-4 sm:h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                </svg>
-                {searchQuery && (
+          {/* Search + filter bar only when not controlled by parent (e.g. unified sticky header) */}
+          {!isControlled && (
+            <div className="sticky top-14 sm:top-16 z-10 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm mb-4 sm:mb-6 py-3 space-y-3 overflow-visible">
+              <div className="bg-white rounded-2xl p-3.5 shadow-md border border-gray-100">
+                <div className="relative w-full">
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 pr-9 py-2.5 sm:py-2 bg-gray-50 border-0 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-[#046cb8]/20 focus:ring-offset-0 w-full"
+                  />
+                  <svg className="w-5 h-5 sm:w-4 sm:h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                  </svg>
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto overflow-y-visible pb-1 scrollbar-hide pr-4">
+                <button
+                  onClick={() => {
+                    setSelectedCategory('');
+                    setSearchQuery('');
+                    onDestinationChange?.(null);
+                    onClearMyQuestions?.();
+                  }}
+                  className={`px-4 py-2 text-sm font-medium rounded-full transition-colors flex-shrink-0 ${
+                    !selectedCategory && !searchQuery && !selectedDestination && !showMyQuestions
+                      ? 'text-white bg-[#046cb8]'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  All
+                </button>
+                {selectedDestination && (
                   <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    onClick={() => onDestinationChange?.(null)}
+                    className="px-4 py-2 text-sm font-medium rounded-full transition-colors bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 flex items-center gap-1 flex-shrink-0"
                   >
-                    <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <span className="truncate max-w-[80px] sm:max-w-none">{selectedDestination}</span>
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
                   </button>
                 )}
+                {categories?.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => {
+                      setSelectedCategory(category.category);
+                      setSearchQuery('');
+                    }}
+                    className={`px-4 py-2 text-sm font-medium rounded-full transition-colors flex-shrink-0 ${
+                      selectedCategory === category.category
+                        ? 'text-white bg-[#046cb8]'
+                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    {category.category}
+                  </button>
+                ))}
               </div>
             </div>
-            <div className="flex items-center gap-2 overflow-x-auto overflow-y-visible pb-1 scrollbar-hide pr-4">
-              <button 
-                onClick={() => {
-                  setSelectedCategory('');
-                  setSearchQuery('');
-                  onDestinationChange?.(null);
-                  onClearMyQuestions?.();
-                }}
-                className={`px-4 py-2 text-sm font-medium rounded-full transition-colors flex-shrink-0 ${
-                  !selectedCategory && !searchQuery && !selectedDestination && !showMyQuestions
-                    ? 'text-white bg-[#046cb8]' 
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                All
-              </button>
-              {selectedDestination && (
-                <button
-                  onClick={() => onDestinationChange?.(null)}
-                  className="px-4 py-2 text-sm font-medium rounded-full transition-colors bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 flex items-center gap-1 flex-shrink-0"
-                >
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="truncate max-w-[80px] sm:max-w-none">{selectedDestination}</span>
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              )}
-              {categories?.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => {
-                    setSelectedCategory(category.category);
-                    setSearchQuery('');
-                  }}
-                  className={`px-4 py-2 text-sm font-medium rounded-full transition-colors flex-shrink-0 ${
-                    selectedCategory === category.category 
-                      ? 'text-white bg-[#046cb8]' 
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  {category.category}
-                </button>
-              ))}
-            </div>
-          </div>
-      
+          )}
+
       {filteredQuestions.length === 0 ? (
         <div className="text-center py-12">
-          {showMyQuestions ? (
-            <>
-              <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" />
-              </svg>
-              <p className="text-gray-500 text-base">You haven&apos;t asked any questions yet</p>
-              <p className="text-gray-400 text-xs sm:text-sm mt-1">Start by asking your first travel question!</p>
-            </>
-          ) : searchQuery ? (
-            <>
-              <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-                  <p className="text-gray-500 text-base">No travel questions found for &quot;{searchQuery}&quot;</p>
-                  <p className="text-gray-400 text-xs sm:text-sm mt-1">Try different keywords or ask a new travel question!</p>
-            </>
+          {searchQuery || selectedCategory || selectedDestination || showMyQuestions ? (
+            /* No results for active filters – reference-style empty state */
+            <div className="max-w-sm mx-auto px-4 space-y-6">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
+                <svg className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">No matches for your filters</h2>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  We couldn&apos;t find any questions matching your filters. Try adjusting them or ask our local travel community directly.
+                </p>
+              </div>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory('');
+                    onDestinationChange?.(null);
+                    onClearMyQuestions?.();
+                  }}
+                  className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-white text-[#046cb8] text-sm font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors min-h-[44px]"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
+                  </svg>
+                  Clear all filters
+                </button>
+              </div>
+            </div>
           ) : (
+            /* No questions at all (no filters applied) */
             <>
               <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

@@ -50,6 +50,8 @@ interface QuestionFormProps {
   setSelectedCategoryIds: (value: number[]) => void;
   submitting: boolean;
   user: ClerkUser;
+  /** When true, show skeleton/loader instead of avatar and name (e.g. while Clerk is loading) */
+  userLoading?: boolean;
   categories: Category[];
   categoriesLoading?: boolean;
   showCategoryError: boolean;
@@ -69,6 +71,7 @@ const QuestionForm = ({
   setSelectedCategoryIds,
   submitting,
   user,
+  userLoading = false,
   categories,
   categoriesLoading = false,
   showCategoryError,
@@ -99,20 +102,27 @@ const QuestionForm = ({
       {/* Header: Posting as [Name] | PUBLIC */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          {user?.imageUrl ? (
+          {userLoading ? (
+            <>
+              <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" />
+              <Skeleton className="h-3 w-24 flex-shrink-0" />
+            </>
+          ) : user?.imageUrl ? (
             <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
               <Image src={user.imageUrl} alt="" width={32} height={32} className="w-full h-full object-cover" />
             </div>
           ) : (
             <div className="w-8 h-8 rounded-full bg-[#046cb8] flex items-center justify-center flex-shrink-0">
               <span className="text-white text-xs font-medium">
-                {user?.firstName?.charAt(0) || user?.lastName?.charAt(0) || '?'}
+                {user?.firstName?.charAt(0) || user?.lastName?.charAt(0) || 'U'}
               </span>
             </div>
           )}
-          <span className="text-xs text-gray-500 truncate">
-            Posting as <span className="text-[#046cb8] font-medium">{displayName}</span>
-          </span>
+          {!userLoading && (
+            <span className="text-xs text-gray-500 truncate">
+              Posting as <span className="text-[#046cb8] font-medium">{displayName}</span>
+            </span>
+          )}
         </div>
         <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-[#046cb8] text-[10px] font-semibold uppercase tracking-wide flex-shrink-0">
           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
