@@ -16,6 +16,7 @@ interface AnswersListProps {
 const AnswersList = ({ answers, loading, onAnswerUpdate, onReply, surface = 'page' }: AnswersListProps) => {
   const { data: currentUser } = useCurrentUser();
   const [votingAnswerId, setVotingAnswerId] = useState<number | null>(null);
+  const [voteOverrides, setVoteOverrides] = useState<Record<number, { helpfulCount: number; isHelpful: boolean }>>({});
   const [sortBy, setSortBy] = useState<'helpful' | 'newest'>('helpful');
   const [editingAnswerId, setEditingAnswerId] = useState<number | null>(null);
   const [editContent, setEditContent] = useState('');
@@ -23,6 +24,11 @@ const AnswersList = ({ answers, loading, onAnswerUpdate, onReply, surface = 'pag
   const [collapsedReplies, setCollapsedReplies] = useState<Set<number>>(new Set());
 
   const handleMarkHelpful = async (answerId: number, currentIsHelpful: boolean) => {
+    if (!currentUser) {
+      alert('Please sign in to mark answers as helpful.');
+      return;
+    }
+
     setVotingAnswerId(answerId);
     try {
       const response = await fetch(`/api/answers/${answerId}`, {
@@ -30,11 +36,27 @@ const AnswersList = ({ answers, loading, onAnswerUpdate, onReply, surface = 'pag
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isHelpful: !currentIsHelpful }),
       });
-      if (response.ok && onAnswerUpdate) {
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || 'Failed to update helpful vote');
+        return;
+      }
+
+      setVoteOverrides((prev) => ({
+        ...prev,
+        [answerId]: {
+          helpfulCount: data.helpfulCount ?? data.answer?.helpfulCount ?? 0,
+          isHelpful: data.isHelpful ?? data.answer?.isHelpful === true,
+        },
+      }));
+
+      if (onAnswerUpdate) {
         await onAnswerUpdate();
       }
     } catch (err) {
       console.error('Mark helpful error:', err);
+      alert('Failed to update helpful vote');
     } finally {
       setVotingAnswerId(null);
     }
@@ -123,8 +145,9 @@ const AnswersList = ({ answers, loading, onAnswerUpdate, onReply, surface = 'pag
       ? [answer.user.firstName, answer.user.lastName].filter(Boolean).join(' ')
       : 'Anonymous';
     const initial = answer.user?.firstName?.charAt(0) || answer.user?.lastName?.charAt(0) || 'A';
-    const isHelpful = answer.isHelpful === true;
-    const count = answer.helpfulCount ?? 0;
+    const voteOverride = voteOverrides[answer.id];
+    const isHelpful = voteOverride?.isHelpful ?? answer.isHelpful === true;
+    const count = voteOverride?.helpfulCount ?? answer.helpfulCount ?? 0;
     const isOwner = currentUser != null && answer.createdBy === currentUser.id;
     const isEditing = editingAnswerId === answer.id;
     const isDeleting = deletingAnswerId === answer.id;

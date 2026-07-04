@@ -64,6 +64,13 @@
       "when": 1783001846120,
       "tag": "0008_overrated_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783157893658,
+      "tag": "0009_fixed_norrin_radd",
+      "breakpoints": true
     }
   ]
 }

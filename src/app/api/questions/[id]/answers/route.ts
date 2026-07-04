@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db'; 
-import { answers } from '@/db/schema';
+import { answerVotes, answers, users } from '@/db/schema';
 import { getOrCreateCurrentUser, handleCurrentUserError, type CurrentDbUser } from '@/lib/server/current-user';
 import { validateRequest, handleDatabaseError } from '@/utils/validation-helpers';
 import { createAnswerSchema } from '@/validations';
-import { eq } from 'drizzle-orm';
+import { auth } from '@clerk/nextjs/server';
+import { and, eq, inArray } from 'drizzle-orm';
 
 // GET /api/questions/[id]/answers - Get all answers for a specific question
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -23,6 +24,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       );
     }
 
+    const { userId: clerkId } = await auth();
+    let currentUserId: number | null = null;
+
+    if (clerkId) {
+      const currentUser = await db.query.users.findFirst({
+        where: eq(users.clerkId, clerkId),
+      });
+      currentUserId = currentUser?.id ?? null;
+    }
+
     // Fetch all answers for the specific question with user information
     const questionAnswers = await db.query.answers.findMany({
       where: eq(answers.questionId, questionId),
@@ -32,7 +43,25 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       orderBy: (answers, { desc }) => [desc(answers.createdAt)],
     });
 
-    return NextResponse.json(questionAnswers);
+    const answerIds = questionAnswers.map((answer) => answer.id);
+    const helpfulAnswerIds = new Set<number>();
+
+    if (currentUserId != null && answerIds.length > 0) {
+      const votes = await db
+        .select({ answerId: answerVotes.answerId })
+        .from(answerVotes)
+        .where(and(eq(answerVotes.userId, currentUserId), inArray(answerVotes.answerId, answerIds)));
+
+      votes.forEach((vote) => helpfulAnswerIds.add(vote.answerId));
+    }
+
+    return NextResponse.json(
+      questionAnswers.map((answer) => ({
+        ...answer,
+        helpfulCount: answer.helpfulCount ?? 0,
+        isHelpful: helpfulAnswerIds.has(answer.id),
+      }))
+    );
   } catch (error) {
     return handleDatabaseError(error, 'fetch answers');
   }
