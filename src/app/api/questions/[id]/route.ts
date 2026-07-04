@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db';
 import { questions, users, questionUseful } from '@/db/schema';
+import { getOrCreateCurrentUser, handleCurrentUserError, type CurrentDbUser } from '@/lib/server/current-user';
 import { validateRequest, handleDatabaseError, handleAuthError, handleForbiddenError } from '@/utils/validation-helpers';
 import { updateQuestionSchema } from '@/validations';
 import { eq, and, count } from 'drizzle-orm';
@@ -103,19 +104,11 @@ export async function PUT(
 
     const validatedData = bodyValidation.data;
 
-    // Get authenticated user
-    const { userId: clerkId } = await auth();
-    if (!clerkId) {
-      return handleAuthError('Authentication required');
-    }
-
-    // Find user in database
-    const user = await db.query.users.findFirst({
-      where: eq(users.clerkId, clerkId),
-    });
-
-    if (!user) {
-      return handleAuthError('User not found');
+    let user: CurrentDbUser;
+    try {
+      user = await getOrCreateCurrentUser();
+    } catch (error) {
+      return handleCurrentUserError(error);
     }
 
     // Check if question exists
@@ -269,19 +262,11 @@ export async function DELETE(
       );
     }
 
-    // Get authenticated user
-    const { userId: clerkId } = await auth();
-    if (!clerkId) {
-      return handleAuthError('Authentication required');
-    }
-
-    // Find user in database
-    const user = await db.query.users.findFirst({
-      where: eq(users.clerkId, clerkId),
-    });
-
-    if (!user) {
-      return handleAuthError('User not found');
+    let user: CurrentDbUser;
+    try {
+      user = await getOrCreateCurrentUser();
+    } catch (error) {
+      return handleCurrentUserError(error);
     }
 
     // Check if question exists

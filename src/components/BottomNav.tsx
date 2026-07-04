@@ -35,30 +35,6 @@ function QuestionsIconActive({ className = 'w-6 h-6' }: { className?: string }) 
   );
 }
 
-function MapIcon({ className = 'w-6 h-6' }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-    </svg>
-  );
-}
-
-function ProfileIcon({ className = 'w-6 h-6' }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
-  );
-}
-
-function ProfileIconActive({ className = 'w-6 h-6' }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-      <path fillRule="evenodd" d="M12 2a4 4 0 00-4 4v2a4 4 0 008 0V6a4 4 0 00-4-4zm6 10a6 6 0 00-12 0c0 1.5.5 2.9 1.4 4H4a2 2 0 00-2 2v2a2 2 0 002 2h16a2 2 0 002-2v-2a2 2 0 00-2-2h-1.6c.9-1.1 1.4-2.5 1.4-4z" clipRule="evenodd" />
-    </svg>
-  );
-}
-
 export function BottomNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -72,12 +48,11 @@ export function BottomNav() {
       role="navigation"
       aria-label="Main navigation"
     >
-      <div className="flex items-end justify-around px-1 pb-3 pt-1 h-16">
+      <div className="grid h-16 grid-cols-3 items-end px-2 pb-3 pt-1">
         {/* Explore */}
         <Link
           href="/"
-          className="flex flex-col items-center justify-end flex-1 min-h-[44px] pt-2 pb-2 gap-0.5 transition-colors touch-manipulation"
-          style={{ minWidth: 44 }}
+          className="flex min-h-[44px] flex-col items-center justify-end gap-0.5 pb-2 pt-2 transition-colors touch-manipulation"
         >
           <span className={isHome ? 'text-[#046cb8]' : 'text-gray-500'}>
             {isHome ? <ExploreIconActive className="w-6 h-6" /> : <ExploreIcon className="w-6 h-6" />}
@@ -87,26 +62,17 @@ export function BottomNav() {
           </span>
         </Link>
 
-        {/* Questions - takes user to "My Questions" (questions they asked) */}
-        <Link
-          href="/?my=questions"
-          className="flex flex-col items-center justify-end flex-1 min-h-[44px] pt-2 pb-2 gap-0.5 transition-colors touch-manipulation"
-          style={{ minWidth: 44 }}
-          aria-label="My questions"
-        >
-          <span className={isMyQuestionsView || isQuestionDetailPage ? 'text-[#046cb8]' : 'text-gray-500'}>
-            {(isMyQuestionsView || isQuestionDetailPage) ? <QuestionsIconActive className="w-6 h-6" /> : <QuestionsIcon className="w-6 h-6" />}
-          </span>
-          <span className={`text-[10px] font-medium uppercase tracking-wide ${isMyQuestionsView || isQuestionDetailPage ? 'text-[#046cb8]' : 'text-gray-500'}`}>
-            Questions
-          </span>
-        </Link>
-
         {/* Central Ask FAB */}
         <Link
           href="/#ask"
-          className="flex flex-col items-center justify-center flex-1 min-h-[44px] -mt-5 touch-manipulation"
-          style={{ minWidth: 56 }}
+          onClick={(event) => {
+            if (pathname !== '/') return;
+
+            event.preventDefault();
+            window.history.replaceState(null, '', '/#ask');
+            window.dispatchEvent(new Event('roaming-map:open-ask'));
+          }}
+          className="flex min-h-[44px] -mt-5 flex-col items-center justify-center touch-manipulation"
           aria-label="Ask a question"
         >
           <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#046cb8] text-white shadow-lg hover:bg-[#035a9e] active:scale-95 transition-all">
@@ -117,26 +83,18 @@ export function BottomNav() {
           <span className="text-[10px] font-medium uppercase tracking-wide text-gray-500 mt-1">Ask</span>
         </Link>
 
-        {/* Map */}
+        {/* Questions - takes user to "My Questions" (questions they asked) */}
         <Link
-          href="#"
-          className="flex flex-col items-center justify-end flex-1 min-h-[44px] pt-2 pb-2 gap-0.5 transition-colors text-gray-500 touch-manipulation"
-          style={{ minWidth: 44 }}
+          href="/?my=questions"
+          className="flex min-h-[44px] flex-col items-center justify-end gap-0.5 pb-2 pt-2 transition-colors touch-manipulation"
+          aria-label="My questions"
         >
-          <MapIcon className="w-6 h-6" />
-          <span className="text-[10px] font-medium uppercase tracking-wide">Map</span>
-        </Link>
-
-        {/* Profile */}
-        <Link
-          href="#"
-          className="flex flex-col items-center justify-end flex-1 min-h-[44px] pt-2 pb-2 gap-0.5 transition-colors touch-manipulation"
-          style={{ minWidth: 44 }}
-        >
-          <span className="text-gray-500">
-            <ProfileIcon className="w-6 h-6" />
+          <span className={isMyQuestionsView || isQuestionDetailPage ? 'text-[#046cb8]' : 'text-gray-500'}>
+            {(isMyQuestionsView || isQuestionDetailPage) ? <QuestionsIconActive className="w-6 h-6" /> : <QuestionsIcon className="w-6 h-6" />}
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-wide text-gray-500">Profile</span>
+          <span className={`text-[10px] font-medium uppercase tracking-wide ${isMyQuestionsView || isQuestionDetailPage ? 'text-[#046cb8]' : 'text-gray-500'}`}>
+            Questions
+          </span>
         </Link>
       </div>
     </nav>

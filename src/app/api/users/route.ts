@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db';
-import { users } from '@/db/schema';
 import { handleDatabaseError } from '@/utils/validation-helpers';
 
 // GET /api/users - Get all users

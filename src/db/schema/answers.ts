@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, timestamp, integer, type AnyPgColumn } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, boolean, timestamp, integer, index, type AnyPgColumn } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { questions } from './questions';
 import { users } from './users';
@@ -16,7 +16,11 @@ export const answers = pgTable('answers', {
   isHelpful: boolean('is_helpful').default(false),
   helpfulCount: integer('helpful_count').default(0),
   isVerified: boolean('is_verified').default(false), // For verified locals
-});
+}, (t) => [
+  index('answers_question_id_idx').on(t.questionId),
+  index('answers_parent_id_idx').on(t.parentId),
+  index('answers_created_by_idx').on(t.createdBy),
+]);
 
 export const answersRelations = relations(answers, ({ one }) => ({
   question: one(questions, {

@@ -200,14 +200,9 @@ const QuestionForm = ({
         )}
       </div>
 
-      {/* Footer: icons left, Ask Community right */}
+      {/* Composer actions: destination, urgency, and submit */}
       <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-100">
         <div className="flex items-center gap-1 sm:gap-2">
-          <button type="button" className="p-2 text-gray-400 hover:text-[#046cb8] rounded-lg transition-colors" aria-label="Add photos">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-            </svg>
-          </button>
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"

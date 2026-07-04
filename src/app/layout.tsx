@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Roaming Map - Travel Q&A Platform | Get Answers from Verified Locals",
-  description: "Connect with verified locals worldwide for authentic travel insights, real-time Q&A, and transparent pricing. Your local buddy in your pocket.",
+  title: "Roaming Map - Sri Lanka Travel Q&A",
+  description: "Ask and answer destination-specific travel questions for Sri Lanka. Browse discussions by place, category, and useful community replies.",
 };
 
 export default function RootLayout({
@@ -28,9 +28,10 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          suppressHydrationWarning
         >
           <TanStackQueryProvider>
             <div className="min-h-screen pb-16 md:pb-0">

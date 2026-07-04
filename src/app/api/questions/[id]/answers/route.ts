@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db'; 
-import { answers, users } from '@/db/schema';
+import { answers } from '@/db/schema';
+import { getOrCreateCurrentUser, handleCurrentUserError, type CurrentDbUser } from '@/lib/server/current-user';
 import { validateRequest, handleDatabaseError } from '@/utils/validation-helpers';
 import { createAnswerSchema } from '@/validations';
-import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
 // GET /api/questions/[id]/answers - Get all answers for a specific question
@@ -55,16 +55,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       );
     }
 
-    // Get the authenticated user from Clerk
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        {
-          error: 'Authentication required',
-        },
-        { status: 401 }
-      );
+    let user: CurrentDbUser;
+    try {
+      user = await getOrCreateCurrentUser();
+    } catch (error) {
+      return handleCurrentUserError(error);
     }
 
     // Validate the request body using Zod
@@ -85,72 +80,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         return NextResponse.json(
           { error: 'Parent answer not found or does not belong to this question' },
           { status: 400 }
-        );
-      }
-    }
-
-    // Find or create user in our database
-    let user = await db.query.users.findFirst({
-      where: eq(users.clerkId, userId),
-    });
-
-    // If user doesn't exist OR has demo data, fetch real data from Clerk
-    if (!user || user.name === 'Demo User') {
-      // Create new user from Clerk data
-      try {
-        if (!process.env.CLERK_SECRET_KEY) {
-          console.error('CLERK_SECRET_KEY is not set');
-          return NextResponse.json(
-            { error: 'Server configuration error' },
-            { status: 500 }
-          );
-        }
-
-        const clerkResponse = await fetch('https://api.clerk.com/v1/users/' + userId, {
-          headers: {
-            Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
-          },
-        });
-
-        if (!clerkResponse.ok) {
-          console.error('Clerk API error:', clerkResponse.status, await clerkResponse.text());
-          return NextResponse.json(
-            { error: 'Failed to fetch user data from Clerk' },
-            { status: 500 }
-          );
-        }
-
-        const clerkUser = await clerkResponse.json();
-
-        if (!user) {
-          // Create new user
-          const [newUser] = await db.insert(users).values({
-            clerkId: userId,
-            email: clerkUser.email_addresses?.[0]?.email_address || '',
-            firstName: clerkUser.first_name || '',
-            lastName: clerkUser.last_name || '',
-            name: `${clerkUser.first_name || ''} ${clerkUser.last_name || ''}`.trim(),
-          }).returning();
-          user = newUser;
-        } else {
-          // Update existing demo user with real data
-          const [updatedUser] = await db.update(users)
-            .set({
-              email: clerkUser.email_addresses?.[0]?.email_address || '',
-              firstName: clerkUser.first_name || '',
-              lastName: clerkUser.last_name || '',
-              name: `${clerkUser.first_name || ''} ${clerkUser.last_name || ''}`.trim(),
-              updatedAt: new Date(),
-            })
-            .where(eq(users.clerkId, userId))
-            .returning();
-          user = updatedUser;
-        }
-      } catch (error) {
-        console.error('Error creating user:', error);
-        return NextResponse.json(
-          { error: 'Failed to create user' },
-          { status: 500 }
         );
       }
     }

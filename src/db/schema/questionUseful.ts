@@ -1,4 +1,4 @@
-import { pgTable, integer, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, integer, primaryKey, index } from 'drizzle-orm/pg-core';
 import { questions } from './questions';
 import { users } from './users';
 
@@ -16,5 +16,9 @@ export const questionUseful = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
   },
-  (t) => [primaryKey({ columns: [t.questionId, t.userId] })]
+  (t) => [
+    primaryKey({ columns: [t.questionId, t.userId] }),
+    index('question_useful_question_id_idx').on(t.questionId),
+    index('question_useful_user_id_idx').on(t.userId),
+  ]
 );

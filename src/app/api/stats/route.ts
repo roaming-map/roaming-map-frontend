@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db';
-import { questions, answers, users } from '@/db/schema';
+import { questions, answers } from '@/db/schema';
 import { count, countDistinct } from 'drizzle-orm';
 
 export async function GET() {

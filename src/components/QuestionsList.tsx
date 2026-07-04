@@ -18,10 +18,33 @@ interface Question {
   user?: {
     id: number;
     name: string | null;
-    email: string;
+    email?: string;
     firstName: string | null;
     lastName: string | null;
-  };
+  } | null;
+  author?: {
+    id: number;
+    name: string | null;
+    firstName: string | null;
+    lastName: string | null;
+  } | null;
+  categories?: Array<{
+    id: number;
+    category: string;
+  }>;
+  answerCount?: number;
+  latestAnswer?: {
+    id: number;
+    contentPreview: string;
+    createdBy: number | null;
+    createdAt: string;
+    user?: {
+      id: number;
+      name: string | null;
+      firstName: string | null;
+      lastName: string | null;
+    } | null;
+  } | null;
   answers?: Array<{
     id: number;
     content: string;
@@ -35,7 +58,7 @@ interface Question {
       email?: string;
       firstName: string | null;
       lastName: string | null;
-    };
+    } | null;
   }>;
   questionsToCategories?: Array<{
     questionId: number;
@@ -165,8 +188,8 @@ const QuestionsList = ({
     return currentUser && question.createdBy === currentUser.id;
   };
 
-  // Filter questions based on search query, selected category, destination, and user filter
-  const filteredQuestions = questions.filter(question => {
+  // Server-filtered feeds pass controlled filters from the parent, so avoid duplicate client filtering.
+  const filteredQuestions = isControlled ? questions : questions.filter(question => {
     // Filter by "My Questions" if enabled
     if (showMyQuestions && currentUserId) {
       if (question.createdBy !== currentUserId) {
@@ -442,6 +465,25 @@ const QuestionsList = ({
                     )}
                   </button>
 
+                  {q.latestAnswer && (
+                    <button
+                      type="button"
+                      onClick={() => openQuestion(q.id)}
+                      className="mt-3 flex w-full items-start gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-left transition-colors hover:border-gray-200 hover:bg-gray-100"
+                    >
+                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-500 text-[10px] font-semibold text-white">
+                        {q.latestAnswer.user?.firstName?.charAt(0) || q.latestAnswer.user?.name?.charAt(0) || 'A'}
+                      </span>
+                      <span className="min-w-0 text-xs sm:text-sm">
+                        <span className="font-semibold text-gray-700">
+                          {q.latestAnswer.user?.name || q.latestAnswer.user?.firstName || 'Anonymous'}
+                        </span>
+                        <span className="text-gray-500"> replied: </span>
+                        <span className="text-gray-600">{q.latestAnswer.contentPreview}</span>
+                      </span>
+                    </button>
+                  )}
+
                   {/* Delete Confirmation - below actions */}
                   {showDeleteConfirm === q.id && (
                     <div className="mt-3 p-3 bg-gray-50 border border-red-200 rounded-lg flex flex-col sm:flex-row sm:items-center gap-2">
@@ -477,7 +519,7 @@ const QuestionsList = ({
                 {/* Question Footer - single row: answers + useful */}
                 <div className="flex items-center justify-between min-h-[44px]">
                   <div className="flex items-center gap-2 sm:gap-4 py-1">
-                    {q.answers && q.answers.length > 0 ? (
+                    {(q.answerCount ?? q.answers?.length ?? 0) > 0 ? (
                       <button
                         onClick={() => openQuestion(q.id)}
                         className="flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-600 hover:text-[#046cb8] transition-colors cursor-pointer"
@@ -485,7 +527,7 @@ const QuestionsList = ({
                         <svg className="w-4 h-4 text-[#046cb8]" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
                         </svg>
-                        {q.answers.length} Answer{q.answers.length !== 1 ? 's' : ''}
+                        {q.answerCount ?? q.answers?.length ?? 0} Answer{(q.answerCount ?? q.answers?.length ?? 0) !== 1 ? 's' : ''}
                       </button>
                     ) : (
                       <button

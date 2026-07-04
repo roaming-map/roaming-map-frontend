@@ -1,7 +1,7 @@
 'use client';
 
 import { SignedIn, SignedOut, UserButton, useUser, SignInButton } from '@clerk/nextjs';
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import { usePathname, useSearchParams } from 'next/navigation';
 import Image from "next/image";
 import QuestionForm from '@/components/QuestionForm';
@@ -26,8 +26,27 @@ function HomeContent() {
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
   const [isAskComposerOpen, setIsAskComposerOpen] = useState(false);
 
+  const questionFilters = useMemo(() => ({
+    limit: 20,
+    category: selectedCategory || undefined,
+    destination: selectedDestination || undefined,
+    search: searchQuery.trim() || undefined,
+    my: showMyQuestions || undefined,
+  }), [selectedCategory, selectedDestination, searchQuery, showMyQuestions]);
+
   // TanStack Query hooks
-  const { data: questions, isLoading } = useQuestions();
+  const {
+    data: questionPages,
+    isLoading,
+    isError: questionsError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useQuestions(questionFilters);
+  const questions = useMemo(
+    () => questionPages?.pages.flatMap((page) => page.items) ?? [],
+    [questionPages]
+  );
   const { data: categories, isLoading: categoriesLoading } = useCategories();
   const { data: stats } = useStats();
   const { data: activeUsers } = useActiveUsers();
@@ -88,16 +107,21 @@ function HomeContent() {
   // Scroll to Ask form when opening /#ask (e.g. from bottom nav FAB)
   useEffect(() => {
     if (pathname !== '/' || typeof window === 'undefined') return;
-    const scrollToAsk = () => {
+    const openAskComposer = () => {
+      setShowMyQuestions(false);
       if (window.location.hash === '#ask') {
         setIsAskComposerOpen(true);
         const el = document.getElementById('ask');
         if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }));
       }
     };
-    scrollToAsk();
-    window.addEventListener('hashchange', scrollToAsk);
-    return () => window.removeEventListener('hashchange', scrollToAsk);
+    openAskComposer();
+    window.addEventListener('hashchange', openAskComposer);
+    window.addEventListener('roaming-map:open-ask', openAskComposer);
+    return () => {
+      window.removeEventListener('hashchange', openAskComposer);
+      window.removeEventListener('roaming-map:open-ask', openAskComposer);
+    };
   }, [pathname]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -166,15 +190,7 @@ function HomeContent() {
               />
               <span className="text-lg sm:text-xl font-semibold text-[#046cb8] truncate">Roaming Map</span>
             </div>
-            <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
-              <a href="#" className="hidden md:inline text-gray-600 hover:text-gray-900 text-sm font-medium">How it works</a>
-              <a href="#" className="hidden md:inline text-gray-600 hover:text-gray-900 text-sm font-medium">Community</a>
-              <a href="#" className="hidden md:inline text-gray-600 hover:text-gray-900 text-sm font-medium">FAQ</a>
-              <button type="button" className="p-2 text-gray-500 hover:text-gray-700 rounded-lg" aria-label="Notifications">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-                </svg>
-              </button>
+            <div className="flex items-center gap-3 flex-shrink-0">
               <SignedIn>
                 <UserButton afterSignOutUrl="/" />
               </SignedIn>
@@ -246,13 +262,14 @@ function HomeContent() {
                   <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200">
                     <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Menu</h3>
                     <nav className="space-y-1">
-                      <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-900 bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
+                      <button type="button" className="w-full flex items-center gap-2 px-2 py-2 text-gray-900 bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                         </svg>
                         <span className="text-sm">Home</span>
                       </button>
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => {
                       const next = !showMyQuestions;
                       setShowMyQuestions(next);
@@ -272,12 +289,6 @@ function HomeContent() {
                         </svg>
                     <span className="text-sm">My Questions</span>
                       </button>
-                      <button className="w-full flex items-center gap-2 px-2 py-2 text-gray-700 hover:bg-[#046cb8]/10 rounded-lg font-medium transition-colors">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                        </svg>
-                        <span className="text-sm">Verified Locals</span>
-                      </button>
                     </nav>
                   </div>
 
@@ -290,7 +301,7 @@ function HomeContent() {
                     </svg>
                   </div>
                   <h3 className="font-semibold text-sm mb-2">Travel Tips</h3>
-                  <p className="text-white/80 text-xs mb-3">Get instant answers from verified locals</p>
+                  <p className="text-white/80 text-xs mb-3">Ask specific travel questions with destination context</p>
                   <div className="flex justify-center gap-1">
                     <span className="text-lg">✈️</span>
                     <span className="text-lg">🏨</span>
@@ -442,8 +453,13 @@ function HomeContent() {
 
             {/* Questions Feed */}
             <div className="space-y-4">
+              {questionsError && (
+                <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  Couldn&apos;t load questions. Please refresh and try again.
+                </div>
+              )}
               <QuestionsList 
-                questions={questions || []}
+                questions={questions}
                 loading={isLoading}
                 selectedDestination={selectedDestination}
                 onDestinationChange={setSelectedDestination}
@@ -459,6 +475,18 @@ function HomeContent() {
                 setSelectedCategory={setSelectedCategory}
                 onQuestionSelect={setSelectedQuestionId}
               />
+              {hasNextPage && (
+                <div className="flex justify-center pt-2 pb-6">
+                  <button
+                    type="button"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="min-h-[44px] rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-[#046cb8] shadow-sm transition-colors hover:bg-[#046cb8]/5 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isFetchingNextPage ? 'Loading...' : 'Load More'}
+                  </button>
+                </div>
+              )}
             </div>
       </main>
   
@@ -550,20 +578,30 @@ function HomeContent() {
                     return (
                       <button
                         key={category.id}
-                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                        type="button"
+                        className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+                          selectedCategory === category.category
+                            ? 'bg-[#046cb8]/10 text-[#046cb8]'
+                            : 'hover:bg-gray-50'
+                        }`}
                         onClick={() => {
-                          // Scroll to question form and focus on categories
-                          const questionForm = document.querySelector('textarea');
-                          if (questionForm) {
-                            questionForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            questionForm.focus();
-                          }
+                          setSelectedCategory(
+                            selectedCategory === category.category ? '' : category.category
+                          );
+                          setSearchQuery('');
+                          setSelectedDestination(null);
+                          setShowMyQuestions(false);
+                          window.history.replaceState(null, '', '/');
                         }}
                       >
-                      <div className="w-8 h-8 bg-[#046cb8]/10 rounded-full flex items-center justify-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        selectedCategory === category.category ? 'bg-[#046cb8]/15' : 'bg-[#046cb8]/10'
+                      }`}>
                           <span className="text-lg">{getCategoryIcon(category.category)}</span>
                       </div>
-                        <span className="text-xs font-medium text-gray-700">{category.category}</span>
+                        <span className={`text-xs font-medium ${
+                          selectedCategory === category.category ? 'text-[#046cb8]' : 'text-gray-700'
+                        }`}>{category.category}</span>
                     </button>
                     );
                   })}
@@ -594,88 +632,6 @@ function HomeContent() {
           </aside>
         </div>
       </div>
-
-      {/* Features Section */}
-      <div className="bg-gradient-to-br from-blue-50/50 to-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-          <div className="text-center">
-            <h3 className="text-3xl font-bold text-gray-900 mb-8">Join Thousands of Travelers</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-[#046cb8]/20 hover:shadow-md transition-shadow">
-                <div className="w-16 h-16 bg-[#046cb8]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-[#046cb8]" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Real-time Q&A</h4>
-                <p className="text-gray-600 text-sm">Get instant answers from verified locals worldwide</p>
-              </div>
-              <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-[#046cb8]/20 hover:shadow-md transition-shadow">
-                <div className="w-16 h-16 bg-[#046cb8]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-[#046cb8]" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Transparent Pricing</h4>
-                <p className="text-gray-600 text-sm">No hidden costs or surprises - know what you pay upfront</p>
-              </div>
-              <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-[#046cb8]/20 hover:shadow-md transition-shadow">
-                <div className="w-16 h-16 bg-[#046cb8]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-[#046cb8]" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Verified Locals</h4>
-                <p className="text-gray-600 text-sm">Trusted community members with authentic local knowledge</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Simple Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <Image
-                  src="/short-logo.png"
-                  alt="Roaming Map Logo"
-                  width={32}
-                  height={32}
-                  className="rounded-lg"
-                />
-                <span className="text-xl font-bold">Roaming Map</span>
-              </div>
-              <p className="text-gray-400 mb-4 max-w-md">
-                Connect with verified locals worldwide for authentic travel insights, real-time Q&A, and transparent pricing.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Platform</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">How it works</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Community</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Support</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Connect</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Twitter</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">LinkedIn</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Roaming Map. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
 
       <QuestionAnswerSheet
         questionId={selectedQuestionId}
