@@ -1,72 +1,130 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+import { useUser } from '@clerk/nextjs';
 
-interface AnswerFormProps {
-  onSubmit: (content: string) => Promise<void>;
-  submitting: boolean;
-  message: string;
+interface ReplyTo {
+  answerId: number;
+  name: string;
 }
 
-const AnswerForm = ({ onSubmit, submitting, message }: AnswerFormProps) => {
+interface AnswerFormProps {
+  onSubmit: (content: string, parentId?: number) => Promise<void>;
+  submitting: boolean;
+  message: string;
+  replyTo?: ReplyTo | null;
+  onClearReply?: () => void;
+}
+
+const AnswerForm = ({ onSubmit, submitting, message, replyTo, onClearReply }: AnswerFormProps) => {
   const [answerContent, setAnswerContent] = useState('');
+  const { user } = useUser();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (replyTo) {
+      const form = document.getElementById('answer-form');
+      if (form) {
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      setTimeout(() => {
+        setAnswerContent(`@${replyTo.name} `);
+        textareaRef.current?.focus();
+      }, 350);
+    }
+  }, [replyTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!answerContent.trim()) return;
 
-    await onSubmit(answerContent);
+    await onSubmit(answerContent, replyTo?.answerId);
     setAnswerContent('');
+    onClearReply?.();
   };
 
-  return (
-    <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Post Your Answer</h3>
-      
-      <form onSubmit={handleSubmit}>
-        <textarea
-          value={answerContent}
-          onChange={(e) => setAnswerContent(e.target.value)}
-          placeholder="Share your knowledge about this question..."
-          className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          required
-        />
-        
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-gray-500">
-            {answerContent.length}/2000 characters
-          </p>
-          <Button
-            type="submit"
-            disabled={submitting || !answerContent.trim()}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {submitting ? 'Posting...' : 'Post Answer'}
-          </Button>
-        </div>
-      </form>
+  const isError = message.includes('Error') || message.includes('must be');
 
-      {message && (
-        <div className={`mt-4 p-3 rounded-lg ${
-          message.includes('Error') || message.includes('must be')
-            ? 'bg-red-100 text-red-700 border border-red-200' 
-            : 'bg-green-100 text-green-700 border border-green-200'
-        }`}>
-          <div className="flex items-start gap-2">
-            {message.includes('Error') || message.includes('must be') ? (
-              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+  return (
+    <div className="mb-6" id="answer-form">
+      <h3 className="text-sm font-semibold text-gray-900 mb-3">Post Your Answer</h3>
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 sm:p-5">
+        <form onSubmit={handleSubmit}>
+          {replyTo && (
+            <div className="flex items-center gap-2 mb-3 text-xs text-[#046cb8]">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
               </svg>
+              <span>Replying to <span className="font-semibold">{replyTo.name}</span></span>
+              <button
+                type="button"
+                onClick={() => {
+                  onClearReply?.();
+                  setAnswerContent('');
+                }}
+                className="ml-auto text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+          <div className="flex items-start gap-3">
+            {user?.imageUrl ? (
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden flex-shrink-0 border border-gray-200 mt-0.5">
+                <Image
+                  src={user.imageUrl}
+                  alt="Profile"
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             ) : (
-              <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#046cb8] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white text-sm font-medium">
+                  {user?.firstName?.charAt(0) || user?.lastName?.charAt(0) || '?'}
+                </span>
+              </div>
             )}
-            <span className="text-sm font-medium">{message}</span>
+            <div className="flex-1 min-w-0 flex items-start gap-2">
+              <textarea
+                ref={textareaRef}
+                id="answer-textarea"
+                value={answerContent}
+                onChange={(e) => setAnswerContent(e.target.value)}
+                placeholder={`Share your local knowledge with ${user?.firstName || 'others'}...`}
+                className="flex-1 min-h-[60px] max-h-[160px] border border-gray-200 focus:border-[#046cb8] focus:ring-1 focus:ring-[#046cb8] focus:outline-none text-gray-900 placeholder-gray-400 resize-none text-sm rounded-xl px-3 py-2.5"
+                rows={2}
+                required
+              />
+              <button
+                type="submit"
+                disabled={submitting || !answerContent.trim()}
+                className="bg-[#046cb8] text-white p-2.5 rounded-xl hover:bg-[#035a9e] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                aria-label="Post answer"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+          <div className="flex items-center gap-3 mt-3 ml-12 sm:ml-[52px] text-gray-400">
+            <span className="text-xs">{answerContent.length}/2000</span>
+          </div>
+        </form>
+
+        {message && (
+          <div className={`mt-3 p-3 rounded-lg text-sm ${
+            isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'
+          }`}>
+            {message}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

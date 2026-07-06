@@ -7,6 +7,7 @@ export const createAnswerSchema = z.object({
     .min(10, 'Answer must be at least 10 characters long')
     .max(2000, 'Answer must not exceed 2000 characters'),
   questionId: z.number().int().positive('Invalid question ID'),
+  parentId: z.number().int().positive('Parent answer ID must be valid').optional(),
 });
 
 // Schema for updating an answer

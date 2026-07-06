@@ -1,24 +1,45 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CreateQuestionData, UpdateQuestionData } from '@/validations/questions';
 import { userKeys } from './users';
+
+export interface QuestionAuthorSummary {
+  id: number;
+  name: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email?: string;
+}
+
+export interface QuestionCategorySummary {
+  id: number;
+  category: string;
+}
 
 // Types based on your database schema
 export interface Question {
   id: number;
+  title: string | null;
   question: string;
   destination: string | null;
   isUrgent: boolean;
+  usefulCount?: number;
+  /** True if the current user has marked this question as useful (from API when authenticated) */
+  isUseful?: boolean;
   createdAt: string;
   createdBy: number | null;
-  user?: {
+  author?: QuestionAuthorSummary | null;
+  user?: QuestionAuthorSummary | null;
+  categories?: QuestionCategorySummary[];
+  answerCount?: number;
+  latestAnswer?: {
     id: number;
-    name: string | null;
-    email: string;
-    firstName: string | null;
-    lastName: string | null;
-  };
+    contentPreview: string;
+    createdBy: number | null;
+    createdAt: string;
+    user?: QuestionAuthorSummary | null;
+  } | null;
   questionsToCategories?: Array<{
-    id: number;
+    id?: number;
     questionId: number;
     categoryId: number;
     category: {
@@ -26,6 +47,28 @@ export interface Question {
       category: string;
     };
   }>;
+  answers?: Array<{
+    id: number;
+    content: string;
+    questionId: number;
+    createdBy: number | null;
+    createdAt: string;
+    user?: QuestionAuthorSummary | null;
+  }>;
+}
+
+export interface QuestionFilters {
+  limit?: number;
+  category?: string;
+  destination?: string;
+  search?: string;
+  my?: boolean;
+  urgent?: boolean;
+}
+
+export interface QuestionsPage {
+  items: Question[];
+  nextCursor: string | null;
 }
 
 export interface CreateQuestionResponse {
@@ -37,23 +80,41 @@ export interface CreateQuestionResponse {
 export const questionKeys = {
   all: ['questions'] as const,
   lists: () => [...questionKeys.all, 'list'] as const,
-  list: (filters: Record<string, unknown>) => [...questionKeys.lists(), { filters }] as const,
+  list: (filters: QuestionFilters) => [...questionKeys.lists(), filters] as const,
   details: () => [...questionKeys.all, 'detail'] as const,
   detail: (id: number) => [...questionKeys.details(), id] as const,
   destinations: () => [...questionKeys.all, 'destinations'] as const,
 };
 
-// Hook to fetch all questions
-export function useQuestions() {
-  return useQuery({
-    queryKey: questionKeys.lists(),
-    queryFn: async (): Promise<Question[]> => {
-      const response = await fetch('/api/questions');
+function appendQuestionFilters(params: URLSearchParams, filters: QuestionFilters) {
+  params.set('limit', String(filters.limit ?? 20));
+  if (filters.category) params.set('category', filters.category);
+  if (filters.destination) params.set('destination', filters.destination);
+  if (filters.search) params.set('search', filters.search);
+  if (filters.my) params.set('my', 'true');
+  if (filters.urgent) params.set('urgent', 'true');
+}
+
+// Hook to fetch paginated questions
+export function useQuestions(filters: QuestionFilters = {}) {
+  return useInfiniteQuery({
+    queryKey: questionKeys.list(filters),
+    queryFn: async ({ pageParam }): Promise<QuestionsPage> => {
+      const params = new URLSearchParams();
+      appendQuestionFilters(params, filters);
+
+      if (typeof pageParam === 'string' && pageParam) {
+        params.set('cursor', pageParam);
+      }
+
+      const response = await fetch(`/api/questions?${params.toString()}`);
       if (!response.ok) {
         throw new Error('Failed to fetch questions');
       }
       return response.json();
     },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
 }
 

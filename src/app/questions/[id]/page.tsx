@@ -2,36 +2,26 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/nextjs';
 import { QuestionDetail } from '@/components/questions/QuestionDetail';
 import AnswerForm from '@/components/questions/AnswerForm';
 import AnswersList from '@/components/questions/AnswersList';
-
-interface Answer {
-  id: number;
-  content: string;
-  questionId: number;
-  createdBy: number | null;
-  createdAt: string;
-  isHelpful: boolean;
-  helpfulCount: number;
-  user?: {
-    id: number;
-    firstName: string;
-    lastName: string;
-  };
-}
+import type { Answer } from '@/types/answer';
 
 const QuestionDetailPage = () => {
   const params = useParams();
   const router = useRouter();
-  const questionId = params.id as string;
+  const rawId = params?.id;
+  const questionId = typeof rawId === 'string' ? rawId : '';
+
+  const idNum = parseInt(questionId, 10);
+  const isValidId = questionId !== '' && !isNaN(idNum) && idNum >= 1;
 
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [loading, setLoading] = useState(true);
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
   const [message, setMessage] = useState('');
+  const [replyTo, setReplyTo] = useState<{ answerId: number; name: string } | null>(null);
 
   // Fetch answers for the question
   const fetchAnswers = useCallback(async () => {
@@ -39,18 +29,15 @@ const QuestionDetailPage = () => {
       const response = await fetch(`/api/questions/${questionId}/answers`);
       if (response.ok) {
         const data = await response.json();
-        console.log('📋 Fetched answers:', data);
         setAnswers(data);
-      } else {
-        console.error('❌ Failed to fetch answers:', response.status);
       }
-    } catch (error) {
-      console.error('❌ Error fetching answers:', error);
+    } catch {
+      setAnswers([]);
     }
   }, [questionId]);
 
-  // Submit new answer
-  const handleSubmitAnswer = async (content: string) => {
+  // Submit new answer (optionally as a reply to another answer)
+  const handleSubmitAnswer = async (content: string, parentId?: number) => {
     setSubmittingAnswer(true);
     setMessage('');
 
@@ -63,6 +50,7 @@ const QuestionDetailPage = () => {
         body: JSON.stringify({
           content,
           questionId: parseInt(questionId),
+          ...(parentId != null && { parentId }),
         }),
       });
 
@@ -95,8 +83,7 @@ const QuestionDetailPage = () => {
           setMessage('');
         }, 5000);
       }
-    } catch (error) {
-      console.error('Error submitting answer:', error);
+    } catch {
       setMessage('Error submitting answer');
       
       // Auto-dismiss error message after 5 seconds
@@ -108,51 +95,50 @@ const QuestionDetailPage = () => {
     }
   };
 
-  // Load answers on component mount
   useEffect(() => {
-    const loadAnswers = async () => {
+    if (!isValidId) return;
+    let cancelled = false;
+    const load = async () => {
       setLoading(true);
       await fetchAnswers();
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     };
-    
-    if (questionId) {
-      loadAnswers();
-    }
-  }, [questionId, fetchAnswers]);
+    load();
+    return () => { cancelled = true; };
+  }, [questionId, fetchAnswers, isValidId]);
 
+
+  const goBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) router.back();
+    else router.push('/');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation Bar - Matching Homepage */}
+      {/* Top Navigation Bar – clean centered title like reference */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <button onClick={() => router.push('/')} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                <Image
-                  src="/short-logo.png"
-                  alt="Roaming Map Logo"
-                  width={32}
-                  height={32}
-                  className="rounded-lg"
-                />
-                <span className="text-xl font-semibold text-[#046cb8]">Roaming Map</span>
-              </button>
-            </div>
-            <div className="flex items-center gap-6">
-              <button 
-                onClick={() => router.push('/')}
-                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
-              >
-                ← Back to Home
-              </button>
+        <div className="max-w-4xl mx-auto px-3 sm:px-4">
+          <div className="flex items-center h-14 sm:h-16 relative">
+            {/* Left: back arrow */}
+            <button
+              onClick={goBack}
+              className="flex items-center gap-1 text-gray-700 hover:text-gray-900 transition-colors absolute left-0 z-10"
+              aria-label="Go back"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            {/* Center: title */}
+            <span className="text-sm sm:text-base font-semibold text-gray-900 mx-auto">Question Detail</span>
+            {/* Right: user button */}
+            <div className="absolute right-0 z-10 flex items-center gap-2">
               <SignedIn>
                 <UserButton afterSignOutUrl="/" />
               </SignedIn>
               <SignedOut>
                 <SignInButton mode="modal">
-                  <button className="bg-[#046cb8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#046cb8]/90 transition-colors">
+                  <button className="bg-[#046cb8] text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#046cb8]/90 transition-colors">
                     Sign In
                   </button>
                 </SignInButton>
@@ -162,26 +148,41 @@ const QuestionDetailPage = () => {
         </div>
       </nav>
 
-      {/* Main Content - Matching Homepage Layout */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Question Card - Matching Homepage Style */}
-        <div className="mb-6">
-          <QuestionDetail questionId={parseInt(questionId)} />
-        </div>
-
-        {/* Answer Form */}
-        <AnswerForm 
-          onSubmit={handleSubmitAnswer}
-          submitting={submittingAnswer}
-          message={message}
-        />
-
-        {/* Answers List */}
-        <AnswersList 
-          answers={answers}
-          loading={loading}
-          onAnswerUpdate={fetchAnswers}
-        />
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        {!isValidId ? (
+          <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8 text-center text-gray-500">
+            <p className="text-sm">Invalid question.</p>
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="mt-3 text-sm font-medium text-[#046cb8] hover:text-[#035a9e]"
+            >
+              Back to home
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="mb-6">
+              <QuestionDetail questionId={idNum} answersCount={answers.length} />
+            </div>
+            <AnswerForm
+              onSubmit={handleSubmitAnswer}
+              submitting={submittingAnswer}
+              message={message}
+              replyTo={replyTo}
+              onClearReply={() => setReplyTo(null)}
+            />
+            <div id="answers">
+              <AnswersList
+                answers={answers}
+                loading={loading}
+                onAnswerUpdate={fetchAnswers}
+                onReply={(answerId, name) => setReplyTo({ answerId, name })}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

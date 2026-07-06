@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/db'; 
-import { answers, users } from '@/db/schema';
+import { answerVotes, answers } from '@/db/schema';
+import { getOrCreateCurrentUser, handleCurrentUserError, type CurrentDbUser } from '@/lib/server/current-user';
 import { validateRequest, handleDatabaseError } from '@/utils/validation-helpers';
 import { updateAnswerSchema, markHelpfulSchema } from '@/validations';
-import { auth } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { and, count, eq } from 'drizzle-orm';
 
 // PUT /api/answers/[id] - Update an answer
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -23,30 +23,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       );
     }
 
-    // Get the authenticated user from Clerk
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        {
-          error: 'Authentication required',
-        },
-        { status: 401 }
-      );
-    }
-
-    // Find the user in our database
-    const user = await db.query.users.findFirst({
-      where: eq(users.clerkId, userId),
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          error: 'User not found',
-        },
-        { status: 404 }
-      );
+    let user: CurrentDbUser;
+    try {
+      user = await getOrCreateCurrentUser();
+    } catch (error) {
+      return handleCurrentUserError(error);
     }
 
     // Find the answer and check if user owns it
@@ -86,14 +67,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const validatedData = bodyValidation.data;
 
     // Update the answer
-    const updatedAnswer = await db.update(answers)
+    await db.update(answers)
       .set({
         content: validatedData.content || existingAnswer.content,
         isHelpful: validatedData.isHelpful !== undefined ? validatedData.isHelpful : existingAnswer.isHelpful,
         updatedAt: new Date(),
       })
-      .where(eq(answers.id, answerId))
-      .returning();
+      .where(eq(answers.id, answerId));
 
     // Fetch the complete updated answer with user information
     const completeAnswer = await db.query.answers.findFirst({
@@ -130,30 +110,11 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       );
     }
 
-    // Get the authenticated user from Clerk
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        {
-          error: 'Authentication required',
-        },
-        { status: 401 }
-      );
-    }
-
-    // Find the user in our database
-    const user = await db.query.users.findFirst({
-      where: eq(users.clerkId, userId),
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          error: 'User not found',
-        },
-        { status: 404 }
-      );
+    let user: CurrentDbUser;
+    try {
+      user = await getOrCreateCurrentUser();
+    } catch (error) {
+      return handleCurrentUserError(error);
     }
 
     // Find the answer and check if user owns it
@@ -218,6 +179,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     
     const { isHelpful } = bodyValidation.data;
 
+    let user: CurrentDbUser;
+    try {
+      user = await getOrCreateCurrentUser();
+    } catch (error) {
+      return handleCurrentUserError(error);
+    }
+
     // Find the answer
     const existingAnswer = await db.query.answers.findFirst({
       where: eq(answers.id, answerId),
@@ -232,17 +200,28 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       );
     }
 
-    // Update the helpful count
-    const currentCount = existingAnswer.helpfulCount ?? 0;
-    const newHelpfulCount = isHelpful 
-      ? currentCount + 1 
-      : Math.max(0, currentCount - 1);
+    if (isHelpful) {
+      await db
+        .insert(answerVotes)
+        .values({ answerId, userId: user.id })
+        .onConflictDoNothing({ target: [answerVotes.answerId, answerVotes.userId] });
+    } else {
+      await db
+        .delete(answerVotes)
+        .where(and(eq(answerVotes.answerId, answerId), eq(answerVotes.userId, user.id)));
+    }
 
-    // Update the answer
-    const updatedAnswer = await db.update(answers)
+    const [voteCount] = await db
+      .select({ value: count() })
+      .from(answerVotes)
+      .where(eq(answerVotes.answerId, answerId));
+    const helpfulCount = voteCount ? Number(voteCount.value) : 0;
+
+    // Keep answers.helpful_count for fast display, but do not use answers.is_helpful for vote state.
+    const [updatedAnswer] = await db
+      .update(answers)
       .set({
-        isHelpful: isHelpful,
-        helpfulCount: newHelpfulCount,
+        helpfulCount,
         updatedAt: new Date(),
       })
       .where(eq(answers.id, answerId))
@@ -250,7 +229,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     return NextResponse.json({
       message: `Answer marked as ${isHelpful ? 'helpful' : 'not helpful'}!`,
-      answer: updatedAnswer[0],
+      helpfulCount,
+      isHelpful,
+      answer: {
+        ...updatedAnswer,
+        helpfulCount,
+        isHelpful,
+      },
     });
 
   } catch (error) {
