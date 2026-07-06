@@ -12,7 +12,37 @@ This project let me work through the full stack—schema design, API routes, aut
 
 ## Screenshots
 
-> 🚧 Screenshots coming soon.
+## Screenshots
+
+<table>
+<tr>
+<td align="center" width="50%">
+
+**Home Feed**
+
+<img src="https://github.com/user-attachments/assets/bebc96ee-154d-45c9-a61e-b1fbcee52ff5" width="100%" />
+
+</td>
+
+<td align="center" width="50%">
+
+**Question Detail**
+
+<img src="https://github.com/user-attachments/assets/6dd55b1b-80ff-4ae9-bbd7-8d142ac3a217" width="100%" />
+
+</td>
+</tr>
+</table>
+
+<p align="center">
+
+**Mobile Experience**
+
+</p>
+
+<p align="center">
+<img src="https://github.com/user-attachments/assets/77b1e9d5-1d00-4a67-af2c-08b1aa8f7657" width="300" />
+</p>
 
 <!-- Add desktop and mobile screenshots here -->
 
