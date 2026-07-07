@@ -19,6 +19,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Roaming Map - Sri Lanka Travel Q&A",
   description: "Ask and answer destination-specific travel questions for Sri Lanka. Browse discussions by place, category, and useful community replies.",
+  icons: {
+    icon: "/short-logo.png",
+    apple: "/short-logo.png",
+  },
 };
 
 export default function RootLayout({
