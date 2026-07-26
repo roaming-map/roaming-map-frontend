@@ -7,6 +7,7 @@ import Image from "next/image";
 import QuestionForm from '@/components/QuestionForm';
 import QuestionsList from '@/components/QuestionsList';
 import { QuestionAnswerSheet } from '@/components/questions/QuestionAnswerSheet';
+import { NotificationBell } from '@/components/NotificationBell';
 import { useQuestions, useCreateQuestion, useCategories, useStats, useActiveUsers, usePopularDestinations, useCurrentUser } from "@/hooks/api";
 
 const SCROLL_POSITION_KEY = 'questionsScrollPosition';
@@ -52,7 +53,7 @@ function HomeContent() {
   const { data: activeUsers } = useActiveUsers();
   const { data: popularDestinations } = usePopularDestinations();
   const createQuestionMutation = useCreateQuestion();
-  const { user, isLoaded: isUserLoaded } = useUser();
+  const { user, isLoaded: isUserLoaded, isSignedIn } = useUser();
   const { data: currentUser } = useCurrentUser();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -129,6 +130,11 @@ function HomeContent() {
     setMessage('');
     setShowCategoryError(false);
 
+    if (!isSignedIn) {
+      setMessage('Log in to post your question.');
+      return;
+    }
+
     // Gentle validation - only show error if user tries to submit without category
     if (selectedCategoryIds.length === 0) {
       setShowCategoryError(true);
@@ -190,8 +196,9 @@ function HomeContent() {
               />
               <span className="text-lg sm:text-xl font-semibold text-[#046cb8] truncate">Roaming Map</span>
             </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <SignedIn>
+                <NotificationBell />
                 <UserButton afterSignOutUrl="/" />
               </SignedIn>
               <SignedOut>
@@ -317,57 +324,94 @@ function HomeContent() {
           <main className="flex-1 min-w-0">
             {/* Ask Question card - compact until the user is ready to write */}
             <div id="ask" className={`bg-white rounded-xl shadow-sm border border-gray-100 mb-4 overflow-visible ${showFullAskComposer ? 'p-3 sm:p-5' : 'p-2.5'}`}>
-              {showFullAskComposer ? (
-                <form onSubmit={handleSubmit}>
-                  <QuestionForm
-                    title={title}
-                    question={question}
-                    destination={destination}
-                    isUrgent={isUrgent}
-                    selectedCategoryIds={selectedCategoryIds}
-                    setTitle={setTitle}
-                    setQuestion={setQuestion}
-                    setDestination={setDestination}
-                    setIsUrgent={setIsUrgent}
-                    setSelectedCategoryIds={setSelectedCategoryIds}
-                    submitting={createQuestionMutation.isPending}
-                    user={user}
-                    userLoading={!isUserLoaded}
-                    categories={categories || []}
-                    categoriesLoading={categoriesLoading}
-                    showCategoryError={showCategoryError}
-                    setShowCategoryError={setShowCategoryError}
-                  />
-                </form>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsAskComposerOpen(true)}
-                  className="flex w-full items-center gap-3 rounded-lg bg-gray-50 px-3 py-2.5 text-left transition-colors hover:bg-gray-100"
-                >
-                  {user?.imageUrl ? (
-                    <Image
-                      src={user.imageUrl}
-                      alt=""
-                      width={36}
-                      height={36}
-                      className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+              <SignedIn>
+                {showFullAskComposer ? (
+                  <form onSubmit={handleSubmit}>
+                    <QuestionForm
+                      title={title}
+                      question={question}
+                      destination={destination}
+                      isUrgent={isUrgent}
+                      selectedCategoryIds={selectedCategoryIds}
+                      setTitle={setTitle}
+                      setQuestion={setQuestion}
+                      setDestination={setDestination}
+                      setIsUrgent={setIsUrgent}
+                      setSelectedCategoryIds={setSelectedCategoryIds}
+                      submitting={createQuestionMutation.isPending}
+                      user={user}
+                      userLoading={!isUserLoaded}
+                      categories={categories || []}
+                      categoriesLoading={categoriesLoading}
+                      showCategoryError={showCategoryError}
+                      setShowCategoryError={setShowCategoryError}
                     />
-                  ) : (
-                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#046cb8] text-sm font-semibold text-white">
-                      {user?.firstName?.charAt(0) || 'U'}
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsAskComposerOpen(true)}
+                    className="flex w-full items-center gap-3 rounded-lg bg-gray-50 px-3 py-2.5 text-left transition-colors hover:bg-gray-100"
+                  >
+                    {user?.imageUrl ? (
+                      <Image
+                        src={user.imageUrl}
+                        alt=""
+                        width={36}
+                        height={36}
+                        className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#046cb8] text-sm font-semibold text-white">
+                        {user?.firstName?.charAt(0) || 'U'}
+                      </span>
+                    )}
+                    <span className="min-w-0 flex-1 text-sm text-gray-500">
+                      Ask about prices, routes, food, or places...
                     </span>
-                  )}
-                  <span className="min-w-0 flex-1 text-sm text-gray-500">
-                    Ask about prices, routes, food, or places...
-                  </span>
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#046cb8] text-white">
-                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                    </svg>
-                  </span>
-                </button>
-              )}
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#046cb8] text-white">
+                      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  </button>
+                )}
+              </SignedIn>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button
+                    type="button"
+                    className="w-full text-left"
+                  >
+                    {showFullAskComposer ? (
+                      <div className="space-y-2">
+                        <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-3 text-sm text-gray-400">
+                          What do you want to know about your next destination?
+                        </div>
+                        <p className="text-center text-xs text-gray-400">
+                          <span className="font-medium text-[#046cb8]">Log in</span> to ask the community
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="flex w-full items-center gap-3 rounded-lg bg-gray-50 px-3 py-2.5 transition-colors hover:bg-gray-100">
+                        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-500">
+                          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                          </svg>
+                        </span>
+                        <span className="min-w-0 flex-1 text-sm text-gray-500">
+                          Ask about prices, routes, food, or places...
+                        </span>
+                        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#046cb8] text-white">
+                          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                          </svg>
+                        </span>
+                      </span>
+                    )}
+                  </button>
+                </SignInButton>
+              </SignedOut>
 
               {message && (
                 <div className={`mt-3 p-3 rounded-lg text-sm ${message.includes('Error')

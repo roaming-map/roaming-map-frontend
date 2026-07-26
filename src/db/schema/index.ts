@@ -5,3 +5,4 @@ export * from './users';
 export * from './answers';
 export * from './questionUseful';
 export * from './answerVotes';
+export * from './notifications';

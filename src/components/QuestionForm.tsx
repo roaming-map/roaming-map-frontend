@@ -1,6 +1,7 @@
 import { SRI_LANKA_CITIES } from '@/lib/cities';
 import Image from 'next/image';
 import { getCategoryColors } from '@/lib/category-colors';
+import { MapPin, Zap } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { Category } from '@/hooks/api/categories';
 import { UserResource } from '@clerk/types';
@@ -207,12 +208,19 @@ const QuestionForm = ({
             <button
               type="button"
               onClick={() => { setIsDestinationOpen(!isDestinationOpen); setSearchQuery(''); }}
-              className="p-2 text-gray-400 hover:text-[#046cb8] rounded-lg transition-colors"
-              aria-label="Add destination"
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                destination
+                  ? 'bg-[#046cb8]/10 text-[#046cb8]'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-[#046cb8]'
+              }`}
+              title="Tag a city or area for your question"
+              aria-label={destination ? `Location: ${destination}` : 'Add location'}
+              aria-expanded={isDestinationOpen}
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span className="max-w-[72px] truncate sm:max-w-[100px]">
+                {destination || 'Location'}
+              </span>
             </button>
             {isDestinationOpen && (
               <div className="absolute left-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-[100] overflow-hidden">
@@ -251,12 +259,17 @@ const QuestionForm = ({
           <button
             type="button"
             onClick={() => setIsUrgent(!isUrgent)}
-            className={`p-2 rounded-lg transition-colors ${isUrgent ? 'text-red-600 bg-red-50' : 'text-gray-400 hover:text-[#046cb8]'}`}
-            aria-label="Mark as urgent"
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+              isUrgent
+                ? 'bg-red-50 text-red-600'
+                : 'text-gray-500 hover:bg-red-50/60 hover:text-red-600'
+            }`}
+            title="For time-sensitive questions that need a quick reply"
+            aria-label={isUrgent ? 'Marked as urgent' : 'Mark as urgent'}
+            aria-pressed={isUrgent}
           >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-            </svg>
+            <Zap className="h-3.5 w-3.5 shrink-0" />
+            <span>Urgent</span>
           </button>
         </div>
         <button

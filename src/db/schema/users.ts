@@ -2,6 +2,7 @@ import { pgTable, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { questions } from './questions';
 import { answers } from './answers';
+import { notifications } from './notifications';
 
 // Defines the 'users' table in the database
 export const users = pgTable('users', {
@@ -22,4 +23,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   
   // One user can have many answers
   answers: many(answers),
+
+  notifications: many(notifications, { relationName: 'userNotifications' }),
+  actedNotifications: many(notifications, { relationName: 'actorNotifications' }),
 }));

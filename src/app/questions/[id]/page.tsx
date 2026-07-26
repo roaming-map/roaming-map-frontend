@@ -6,6 +6,7 @@ import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/nextjs';
 import { QuestionDetail } from '@/components/questions/QuestionDetail';
 import AnswerForm from '@/components/questions/AnswerForm';
 import AnswersList from '@/components/questions/AnswersList';
+import { NotificationBell } from '@/components/NotificationBell';
 import type { Answer } from '@/types/answer';
 
 const QuestionDetailPage = () => {
@@ -134,6 +135,7 @@ const QuestionDetailPage = () => {
             {/* Right: user button */}
             <div className="absolute right-0 z-10 flex items-center gap-2">
               <SignedIn>
+                <NotificationBell />
                 <UserButton afterSignOutUrl="/" />
               </SignedIn>
               <SignedOut>

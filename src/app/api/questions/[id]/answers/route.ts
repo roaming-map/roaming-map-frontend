@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db/db'; 
 import { answerVotes, answers, users } from '@/db/schema';
 import { getOrCreateCurrentUser, handleCurrentUserError, type CurrentDbUser } from '@/lib/server/current-user';
+import { notifyOnNewAnswer } from '@/lib/server/notifications';
 import { validateRequest, handleDatabaseError } from '@/utils/validation-helpers';
 import { createAnswerSchema } from '@/validations';
 import { auth } from '@clerk/nextjs/server';
@@ -120,6 +121,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       parentId: validatedData.parentId ?? null,
       createdBy: user.id,
     }).returning();
+
+    try {
+      await notifyOnNewAnswer({
+        questionId,
+        answerId: newAnswer.id,
+        actorId: user.id,
+        content: validatedData.content,
+        parentId: validatedData.parentId ?? null,
+      });
+    } catch (notifyError) {
+      // Don't fail the answer post if notification creation fails
+      console.error('Failed to create notification for answer:', notifyError);
+    }
 
     // Fetch the complete answer with user information
     const completeAnswer = await db.query.answers.findFirst({

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useClerk } from '@clerk/nextjs';
 import { useCurrentUser } from '@/hooks/api';
 import { AnswersListSkeleton } from '@/components/skeletons/AnswersListSkeleton';
 import type { Answer } from '@/types/answer';
@@ -15,6 +16,7 @@ interface AnswersListProps {
 
 const AnswersList = ({ answers, loading, onAnswerUpdate, onReply, surface = 'page' }: AnswersListProps) => {
   const { data: currentUser } = useCurrentUser();
+  const { openSignIn } = useClerk();
   const [votingAnswerId, setVotingAnswerId] = useState<number | null>(null);
   const [voteOverrides, setVoteOverrides] = useState<Record<number, { helpfulCount: number; isHelpful: boolean }>>({});
   const [sortBy, setSortBy] = useState<'helpful' | 'newest'>('helpful');
@@ -23,9 +25,17 @@ const AnswersList = ({ answers, loading, onAnswerUpdate, onReply, surface = 'pag
   const [deletingAnswerId, setDeletingAnswerId] = useState<number | null>(null);
   const [collapsedReplies, setCollapsedReplies] = useState<Set<number>>(new Set());
 
+  const handleReply = (answerId: number, name: string) => {
+    if (!currentUser) {
+      openSignIn();
+      return;
+    }
+    onReply?.(answerId, name);
+  };
+
   const handleMarkHelpful = async (answerId: number, currentIsHelpful: boolean) => {
     if (!currentUser) {
-      alert('Please sign in to mark answers as helpful.');
+      openSignIn();
       return;
     }
 
@@ -275,7 +285,7 @@ const AnswersList = ({ answers, loading, onAnswerUpdate, onReply, surface = 'pag
             </button>
             <button
               type="button"
-              onClick={() => onReply?.(answer.id, displayName)}
+              onClick={() => handleReply(answer.id, displayName)}
               className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-[#046cb8] hover:text-[#035a9e] transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryClient } from '@tanstack/react-query';
 import { CreateQuestionData, UpdateQuestionData } from '@/validations/questions';
 import { userKeys } from './users';
 
@@ -95,6 +95,23 @@ function appendQuestionFilters(params: URLSearchParams, filters: QuestionFilters
   if (filters.urgent) params.set('urgent', 'true');
 }
 
+/** Reuse a question already present in any feed list cache (instant sheet open). */
+export function findQuestionInFeedCache(queryClient: QueryClient, id: number): Question | undefined {
+  const listQueries = queryClient.getQueriesData<InfiniteData<QuestionsPage>>({
+    queryKey: questionKeys.lists(),
+  });
+
+  for (const [, data] of listQueries) {
+    if (!data?.pages) continue;
+    for (const page of data.pages) {
+      const match = page.items.find((item) => item.id === id);
+      if (match) return match;
+    }
+  }
+
+  return undefined;
+}
+
 // Hook to fetch paginated questions
 export function useQuestions(filters: QuestionFilters = {}) {
   return useInfiniteQuery({
@@ -120,6 +137,8 @@ export function useQuestions(filters: QuestionFilters = {}) {
 
 // Hook to fetch a single question by ID
 export function useQuestion(id: number) {
+  const queryClient = useQueryClient();
+
   return useQuery({
     queryKey: questionKeys.detail(id),
     queryFn: async (): Promise<Question> => {
@@ -130,6 +149,8 @@ export function useQuestion(id: number) {
       return response.json();
     },
     enabled: !!id, // Only run query if id is provided
+    // Show feed card data immediately while detail request runs in the background
+    placeholderData: () => (id ? findQuestionInFeedCache(queryClient, id) : undefined),
   });
 }
 

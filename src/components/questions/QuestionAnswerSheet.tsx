@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { SignedIn, SignedOut, useAuth, useClerk } from '@clerk/nextjs';
 import {
   AlertTriangle,
   ExternalLink,
@@ -30,6 +31,8 @@ interface QuestionAnswerSheetProps {
 
 export function QuestionAnswerSheet({ questionId, onClose }: QuestionAnswerSheetProps) {
   const queryClient = useQueryClient();
+  const { isSignedIn } = useAuth();
+  const { openSignIn } = useClerk();
   const isOpen = questionId != null;
   const activeQuestionId = questionId ?? 0;
   const { data: question, isLoading: questionLoading } = useQuestion(activeQuestionId);
@@ -134,6 +137,10 @@ export function QuestionAnswerSheet({ questionId, onClose }: QuestionAnswerSheet
 
   const toggleUseful = async () => {
     if (!questionId || liking) return;
+    if (!isSignedIn) {
+      openSignIn();
+      return;
+    }
     const nextIsUseful = !localIsUseful;
     const previousCount = localUsefulCount ?? question?.usefulCount ?? 0;
     const nextCount = Math.max(0, previousCount + (nextIsUseful ? 1 : -1));
@@ -208,8 +215,8 @@ export function QuestionAnswerSheet({ questionId, onClose }: QuestionAnswerSheet
           </div>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-36 sm:px-5">
-          {questionLoading ? (
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-28 sm:px-5">
+          {questionLoading && !question ? (
             <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50 p-4">
               <div className="h-4 w-36 animate-pulse rounded bg-gray-200" />
               <div className="h-5 w-4/5 animate-pulse rounded bg-gray-200" />
@@ -303,6 +310,7 @@ export function QuestionAnswerSheet({ questionId, onClose }: QuestionAnswerSheet
           </div>
         </div>
 
+        <SignedIn>
         <form onSubmit={submitAnswer} className="absolute inset-x-0 bottom-0 border-t border-gray-100 bg-white p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)]">
           {replyTo && (
             <div className="mb-2 flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-[#046cb8]">
@@ -342,6 +350,24 @@ export function QuestionAnswerSheet({ questionId, onClose }: QuestionAnswerSheet
             )}
           </div>
         </form>
+        </SignedIn>
+        <SignedOut>
+          <div className="absolute inset-x-0 bottom-0 border-t border-gray-100 bg-white p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)]">
+            <button
+              type="button"
+              onClick={() => openSignIn()}
+              className="flex w-full items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-left transition-colors hover:border-gray-300 hover:bg-gray-100 min-h-[44px]"
+            >
+              <span className="text-sm text-gray-400">Add a helpful answer...</span>
+            </button>
+            <p className="mt-1.5 text-center text-[11px] text-gray-400">
+              <button type="button" onClick={() => openSignIn()} className="font-medium text-[#046cb8] hover:underline">
+                Log in
+              </button>
+              {' '}to reply
+            </p>
+          </div>
+        </SignedOut>
       </section>
     </div>
   );

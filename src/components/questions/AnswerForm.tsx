@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { useUser } from '@clerk/nextjs';
+import { SignedIn, SignedOut, useUser, useClerk } from '@clerk/nextjs';
 
 interface ReplyTo {
   answerId: number;
@@ -20,6 +20,7 @@ interface AnswerFormProps {
 const AnswerForm = ({ onSubmit, submitting, message, replyTo, onClearReply }: AnswerFormProps) => {
   const [answerContent, setAnswerContent] = useState('');
   const { user } = useUser();
+  const { openSignIn } = useClerk();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -49,6 +50,21 @@ const AnswerForm = ({ onSubmit, submitting, message, replyTo, onClearReply }: An
   return (
     <div className="mb-6" id="answer-form">
       <h3 className="text-sm font-semibold text-gray-900 mb-3">Post Your Answer</h3>
+      <SignedOut>
+        <button
+          type="button"
+          onClick={() => openSignIn()}
+          className="w-full rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 text-left shadow-md transition-colors hover:bg-gray-50"
+        >
+          <p className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-400">
+            Log in to share your local knowledge...
+          </p>
+          <p className="mt-2 text-center text-xs text-gray-400">
+            <span className="font-medium text-[#046cb8]">Log in</span> to join the conversation
+          </p>
+        </button>
+      </SignedOut>
+      <SignedIn>
       <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 sm:p-5">
         <form onSubmit={handleSubmit}>
           {replyTo && (
@@ -125,6 +141,7 @@ const AnswerForm = ({ onSubmit, submitting, message, replyTo, onClearReply }: An
           </div>
         )}
       </div>
+      </SignedIn>
     </div>
   );
 };

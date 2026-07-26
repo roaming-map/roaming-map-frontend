@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useClerk } from '@clerk/nextjs';
 import { getCategoryColors } from '@/lib/category-colors';
 import { useCategories, useCurrentUser, useDeleteQuestion } from '@/hooks/api';
 import { QuestionsFeedSkeleton } from '@/components/skeletons/QuestionsFeedSkeleton';
@@ -101,6 +102,7 @@ const QuestionsList = ({
   onQuestionSelect,
 }: QuestionsListProps) => {
   const router = useRouter();
+  const { openSignIn } = useClerk();
   const [internalSearch, setInternalSearch] = useState<string>('');
   const [internalCategory, setInternalCategory] = useState<string>('');
   const [reactingQuestionId, setReactingQuestionId] = useState<number | null>(null);
@@ -131,6 +133,10 @@ const QuestionsList = ({
 
   // Handle marking question as useful
   const handleMarkUseful = async (questionId: number) => {
+    if (!currentUser) {
+      openSignIn();
+      return;
+    }
     setReactingQuestionId(questionId);
     
     try {
